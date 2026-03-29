@@ -1,9 +1,20 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 
 #include "wczytaj.h"
 
+
+void test(lista_sasiedztw* m){
+    for(int i = 0; i < m->rozmiar; i++){
+        printf("v%d[ ", i+1);
+        lista_k* temp  = m->lista[i];
+        while(temp){
+            printf("%d ",temp->nr_wierzcholka);
+            temp = temp->next;
+        }
+        printf("]\n");
+    }
+}
 
 // Sprawdza poprawnosc macierzy pod algorym
 // Zwraca 0 jak macierz jest git
@@ -30,6 +41,7 @@ int main(int argc, char** argv)
         fprintf(stderr, "Nie udalo sie utworzyc macierzy.\n");
         return 2;
     }
+    //test(macierz);
 
     if( spr_macierz(macierz) != 0 ){
         fprintf(stderr, "Macierz nie jest odpowiednia do algorytmu.\n");
