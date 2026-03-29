@@ -8,12 +8,12 @@ typedef struct l{
     char* nazwa;    //Dodalem
     double wartosc;
     int nr_wierzcholka;
-    struct l* next;
+    struct l* next; // Kompilator errora walil gdy byl alias*
 }lista_k;
 
 typedef struct m{
     int rozmiar;
-    lista_k** lista;    //Zmienilem z lista* na lista **. Jak jest ktos modzejszy to niech to zmieni by dzialo z lista_k*
+    lista_k** lista;    //Zmienilem z lista* na lista**. Jak jest ktos modzejszy to niech to zmieni by dzialo z lista_k*
 }lista_sasiedztw;
 
 // Wczytuje dane do tej smiesznej macierzy / listy sasiedztw
@@ -21,13 +21,21 @@ typedef struct m{
 int add_k(lista_sasiedztw* m, int from, int to, char* nazwa, double waga)
 {
     lista_k *k = malloc(sizeof(lista_k));
-    if( k == NULL ) return 1;
+    if( k == NULL )
+        return 1;
     
     k->nr_wierzcholka = to;
     k->wartosc = waga;
     k->nazwa = malloc(strlen(nazwa) + 1);
-    if(k->nazwa == NULL) return 1;
-    if( strcpy(k->nazwa, nazwa) == NULL ) return 0;
+    if(k->nazwa == NULL) {
+        free(k);
+        return 1;
+    }
+    if( strcpy(k->nazwa, nazwa) == NULL ) {
+        free(k->nazwa);
+        free(k);
+        return 1;
+    }
     k->next = NULL;
 
     lista_k* temp = m->lista[from-1];
@@ -35,6 +43,9 @@ int add_k(lista_sasiedztw* m, int from, int to, char* nazwa, double waga)
     {
         if(temp->nr_wierzcholka == to){
             fprintf(stderr, "Istmieje juz droga z v%d do v%d", from, to);
+            free(temp);
+            free(k->nazwa);
+            free(k);
             return 1;
         }
         temp = temp->next;
@@ -49,10 +60,14 @@ int add_k(lista_sasiedztw* m, int from, int to, char* nazwa, double waga)
 lista_sasiedztw* w_dane(char* f_name)
 {
     FILE* in = fopen(f_name, "r");
-    if(in == NULL) return NULL;
+    if(in == NULL)
+        return NULL;
 
     lista_sasiedztw* m = malloc(sizeof(lista_sasiedztw));
-    if(m == NULL) return NULL;
+    if(m == NULL){
+        fclose(in);
+        return NULL;
+    }
     m->rozmiar = 0;
 
     char buffer[BUFSIZE];
@@ -65,11 +80,15 @@ lista_sasiedztw* w_dane(char* f_name)
         sscanf(buffer, "%s %d %d %lf", nazwa, &v1, &v2, &waga);
 
         if(v1 < 1 || v2 < 1){
-            fprintf(stderr, "Nr_Wierzcholka nie moze byc mniejszy od 1\n");
+            fprintf(stderr, "Nr_Wierzcholka nie moze byc mniejszy od 1\n"); 
+            // free_m(m);
+            fclose(in);
             return NULL;
         }
         if(waga < 0){
             fprintf(stderr, "Waga nie moze byc ujemna\n");
+            // free_m(m);
+            fclose(in);
             return NULL;
         }
 
@@ -77,15 +96,23 @@ lista_sasiedztw* w_dane(char* f_name)
                         m->rozmiar < v1 ? v1 : m->rozmiar;
         if(new_size != m->rozmiar){    
             m->lista = realloc(m->lista, new_size * sizeof(lista_k*));
-            if(m->lista == NULL) return NULL;
+            if(m->lista == NULL) {
+                // free_m(m);
+                fclose(in);
+                return NULL;
+            }
             m->rozmiar = new_size;
         }
         
         if(add_k( m, v1, v2, nazwa, waga) || add_k( m, v2, v1, nazwa, waga)){
             fprintf(stderr, "Wystapil blad przy dodawaniu krawedzi.\n");
+            // free_m(m);
+            fclose(in);
             return NULL;
         }
     }
+
+    fclose(in);
     return m;
 }
 
@@ -117,6 +144,7 @@ int main(int argc, char** argv)
 
     if( spr_macierz(macierz) != 0 ){
         fprintf(stderr, "Macierz nie jest odpowiednia do algorytmu.\n");
+        // free_m(m);
         return 3;
     }
 
@@ -131,6 +159,8 @@ int main(int argc, char** argv)
         return 4;
     }
 
+    // free_m(m);
+    fclose(out);
     return 0;
 }
 // Jak sie komus chce to moze to rozlorzyc na kilka pliki.
