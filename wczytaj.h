@@ -19,4 +19,6 @@ int add_k(lista_sasiedztw* m, int from, int to, char* nazwa, double waga);
 
 lista_sasiedztw* w_dane(char* f_name);
 
+void free_m(lista_sasiedztw *m);
+
 #endif

@@ -9,7 +9,7 @@ void test(lista_sasiedztw* m){
         printf("v%d[ ", i+1);
         lista_k* temp  = m->lista[i];
         while(temp){
-            printf("%d ",temp->nr_wierzcholka);
+            printf("%s ",temp->nazwa);
             temp = temp->next;
         }
         printf("]\n");
@@ -45,7 +45,7 @@ int main(int argc, char** argv)
 
     if( spr_macierz(macierz) != 0 ){
         fprintf(stderr, "Macierz nie jest odpowiednia do algorytmu.\n");
-        // free_m(m);
+        free_m(macierz);
         return 3;
     }
 
@@ -60,8 +60,7 @@ int main(int argc, char** argv)
         return 4;
     }
 
-    // free_m(m);
+    free_m(macierz);
     fclose(out);
     return 0;
 }
-// Jak sie komus chce to moze to rozlorzyc na kilka pliki.

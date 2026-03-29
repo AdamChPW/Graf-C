@@ -68,13 +68,13 @@ lista_sasiedztw* w_dane(char* f_name)
 
         if(v1 < 1 || v2 < 1){
             fprintf(stderr, "Nr_Wierzcholka nie moze byc mniejszy od 1\n"); 
-            // free_m(m);
+            free_m(m);
             fclose(in);
             return NULL;
         }
         if(waga < 0){
             fprintf(stderr, "Waga nie moze byc ujemna\n");
-            // free_m(m);
+            free_m(m);
             fclose(in);
             return NULL;
         }
@@ -84,7 +84,7 @@ lista_sasiedztw* w_dane(char* f_name)
         if(new_size != m->rozmiar){    
             m->lista = realloc(m->lista, new_size * sizeof(lista_k*));
             if(m->lista == NULL) {
-                // free_m(m);
+                free_m(m);
                 fclose(in);
                 return NULL;
             }
@@ -93,7 +93,7 @@ lista_sasiedztw* w_dane(char* f_name)
         
         if(add_k( m, v1, v2, nazwa, waga) || add_k( m, v2, v1, nazwa, waga)){
             fprintf(stderr, "Wystapil blad przy dodawaniu krawedzi.\n");
-            // free_m(m);
+            free_m(m);
             fclose(in);
             return NULL;
         }
@@ -101,4 +101,19 @@ lista_sasiedztw* w_dane(char* f_name)
 
     fclose(in);
     return m;
+}
+
+void free_m(lista_sasiedztw *m)
+{
+    for(int i = 0; i< m->rozmiar; i++){
+        while(m->lista[i])
+        {
+            lista_k* temp = m->lista[i];
+            free(temp->nazwa);
+            m->lista[i] = temp->next;
+            free(temp);
+        }
+    }
+    free(m->lista);
+    free(m);
 }
