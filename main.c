@@ -18,26 +18,31 @@ typedef struct m{
 
 // Wczytuje dane do tej smiesznej macierzy / listy sasiedztw
 // Ja to zrobie (Adam)
-int add_k(lista_k *origin, int to, char* nazwa, double waga)
+int add_k(lista_sasiedztw* m, int from, int to, char* nazwa, double waga)
 {
     lista_k *k = malloc(sizeof(lista_k));
     if( k == NULL ) return 1;
     
     k->nr_wierzcholka = to;
     k->wartosc = waga;
-    k->nazwa = malloc(strlen(nazwa));
+    k->nazwa = malloc(strlen(nazwa) + 1);
+    if(k->nazwa == NULL) return 1;
     if( strcpy(k->nazwa, nazwa) == NULL ) return 0;
- 
-    while(origin != NULL)
+    k->next = NULL;
+
+    lista_k* temp = m->lista[from-1];
+    while(temp != NULL)
     {
-        if(origin->nr_wierzcholka == to){
-            fprintf(stderr, "Istmieje juz droga do v%d [%s i %s]", to, nazwa, origin->nazwa);
+        if(temp->nr_wierzcholka == to){
+            fprintf(stderr, "Istmieje juz droga z v%d do v%d", from, to);
             return 1;
         }
-        origin = origin->next;
+        temp = temp->next;
     }
 
-    origin = k;
+    k->next = m->lista[from-1];
+    m->lista[from-1] = k;
+
     return 0;
 }
 
@@ -49,7 +54,6 @@ lista_sasiedztw* w_dane(char* f_name)
     lista_sasiedztw* m = malloc(sizeof(lista_sasiedztw));
     if(m == NULL) return NULL;
     m->rozmiar = 0;
-    m->lista = malloc(0);
 
     char buffer[BUFSIZE];
     while(fgets(buffer, BUFSIZE, in) != NULL){
@@ -72,12 +76,12 @@ lista_sasiedztw* w_dane(char* f_name)
         int new_size =  v1 < v2 && m->rozmiar < v2 ? v2 :
                         m->rozmiar < v1 ? v1 : m->rozmiar;
         if(new_size != m->rozmiar){    
-            m->lista = realloc(m->lista, new_size * sizeof(lista_k));
+            m->lista = realloc(m->lista, new_size * sizeof(lista_k*));
             if(m->lista == NULL) return NULL;
             m->rozmiar = new_size;
         }
         
-        if(add_k( m->lista[v1-1], v2, nazwa, waga) || add_k( m->lista[v2-1], v1, nazwa, waga)){
+        if(add_k( m, v1, v2, nazwa, waga) || add_k( m, v2, v1, nazwa, waga)){
             fprintf(stderr, "Wystapil blad przy dodawaniu krawedzi.\n");
             return NULL;
         }
