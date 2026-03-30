@@ -118,14 +118,22 @@ lista_sasiedztw* w_dane(char* f_name)
 
 // Sprawdza poprawnosc macierzy pod algorym
 // Zwraca 0 jak macierz jest git
-int spr_macierz(){
+int spr_macierz(lista_sasiedztw *l){
     return -1;
 }
 
 // Wypisuje dane do pliku f
 // Zwraca 0 jak jest git (brakuje mi bool'a)
-int wyp_dane( FILE *f ){
-    return 1;
+int wyp_dane( FILE *f, lista_sasiedztw *l){
+    if (f == NULL || l == NULL) {
+        return 1; 
+    }
+
+    for (int i = 0; i < l->rozmiar; i++) {
+        fprintf(f, "%d 0.0 0.0\n", i + 1);
+    }
+
+    return 0;
 }
 
 // Main. Plis zostawcie maina jak najbardziej czytelnym
@@ -152,7 +160,7 @@ int main(int argc, char** argv)
 
     FILE *out = argc > 2 ? fopen(argv[2], "w") : fopen("wyjscie", "w");
 
-    if( wyp_dane( out ) == 0 )
+    if( wyp_dane( out, macierz ) == 0 )
         fprintf(stdout, "Wypisano odpowiedz do pliku.\n");
     else {
         fprintf(stderr, "Nie udalo sie zapisac odpowidzi");
