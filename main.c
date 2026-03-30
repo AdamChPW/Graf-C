@@ -18,8 +18,63 @@ void test(lista_sasiedztw* m){
 
 // Sprawdza poprawnosc macierzy pod algorym
 // Zwraca 0 jak macierz jest git
-int spr_macierz(){
-    return -1;
+#include <string.h> // Potrzebne do strcmp
+
+// Sprawdza poprawnosc macierzy pod algorytm
+// Zwraca 0 jak macierz jest git, inna liczba to blad
+int spr_macierz(lista_sasiedztw* l){
+    if (l == NULL || l->rozmiar == 0) return 1;
+
+    int V = l->rozmiar;
+    int E = 0;
+
+    // Liczenie krawędzi
+    for (int i = 0; i < V; i++) {
+        lista_k* temp = l->lista[i];
+        while (temp) {
+            if (i < temp->nr_wierzcholka - 1) { 
+                E++;
+            }
+            temp = temp->next;
+        }
+    }
+
+    // Sprawdzenie warunku Eulera dla V >= 3)
+    if (V >= 3 && E > 3 * V - 6) {
+        fprintf(stderr, "Blad: Graf ma za duzo krawedzi, byc moze nie jest planarny!\n");
+        return 2; 
+    }
+
+    // Sprawdzanie unikalnosci nazw krawędzi
+    char** sprawdzone_nazwy = malloc(E * sizeof(char*));
+    if (sprawdzone_nazwy == NULL) {
+        fprintf(stderr, "Blad alokacji pamieci przy sprawdzaniu macierzy.\n");
+        return -1; 
+    }
+    
+    int licznik_nazw = 0;
+
+    for (int i = 0; i < V; i++) {
+        lista_k* temp = l->lista[i];
+        while (temp) {
+            if (i < temp->nr_wierzcholka - 1) {
+                for (int j = 0; j < licznik_nazw; j++) {
+                    if (strcmp(sprawdzone_nazwy[j], temp->nazwa) == 0) {
+                        fprintf(stderr, "Blad: Nazwa krawedzi '%s' nie jest unikalna!\n", temp->nazwa);
+                        free(sprawdzone_nazwy);
+                        return 3;
+                    }
+                }
+                
+                sprawdzone_nazwy[licznik_nazw] = temp->nazwa;
+                licznik_nazw++;
+            }
+            temp = temp->next;
+        }
+    }
+
+    free(sprawdzone_nazwy);
+    return 0;
 }
 
 // Wypisuje dane do pliku f
@@ -33,6 +88,12 @@ int main(int argc, char** argv)
 {
     if(argc < 2){
         fprintf(stderr, "Nie podano wejscie.\n");
+        return 1;
+    }
+
+    char *ext = strrchr(argv[1], '.');
+    if (ext == NULL || (strcmp(ext, ".txt") != 0 && strcmp(ext, ".csv") != 0)) {
+        fprintf(stderr, "Nieobslugiwany format pliku.\n");
         return 1;
     }
 
