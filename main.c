@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h> // Potrzebne do strcmp
 
 #include "wczytaj.h"
 
@@ -16,9 +17,6 @@ void test(lista_sasiedztw* m){
     }
 }
 
-// Sprawdza poprawnosc macierzy pod algorym
-// Zwraca 0 jak macierz jest git
-#include <string.h> // Potrzebne do strcmp
 
 // Sprawdza poprawnosc macierzy pod algorytm
 // Zwraca 0 jak macierz jest git, inna liczba to blad
@@ -79,8 +77,16 @@ int spr_macierz(lista_sasiedztw* l){
 
 // Wypisuje dane do pliku f
 // Zwraca 0 jak jest git (brakuje mi bool'a)
-int wyp_dane( FILE *f ){
-    return 1;
+int wyp_dane( FILE *f, lista_sasiedztw *l){
+    if (f == NULL || l == NULL) {
+        return 1; 
+    }
+
+    for (int i = 0; i < l->rozmiar; i++) {
+        fprintf(f, "%d 0.0 0.0\n", i + 1);
+    }
+
+    return 0;
 }
 
 // Main. Plis zostawcie maina jak najbardziej czytelnym
@@ -114,10 +120,10 @@ int main(int argc, char** argv)
 
     FILE *out = argc > 2 ? fopen(argv[2], "w") : fopen("wyjscie", "w");
 
-    if( wyp_dane( out ) == 0 )
+    if( wyp_dane( out, macierz ) == 0 )
         fprintf(stdout, "Wypisano odpowiedz do pliku.\n");
     else {
-        fprintf(stderr, "Nie udalo sie zapisac odpowidzi");
+        fprintf(stderr, "Nie udalo sie zapisac odpowidzi\n");
         return 4;
     }
 
