@@ -7,7 +7,7 @@ Lista_W* algo( lista_sasiedztw* m )
     triang( lv );
     fpp_zewn( lv );
 
-    for(int i = 0; i < MAXDEG; i++)
+    for(int i = 0; i < MAXITER; i++)
         tpp_wewn( lv );
 
     return lv;
@@ -36,8 +36,7 @@ Lista_W* lv_init( lista_sasiedztw* m )
 lista_k* add_sk(lista_k* lk, int to, double waga)
 {
     lista_k* new = malloc(sizeof(lista_k));
-    new->nazwa = malloc(sizeof(char));
-    new->nazwa = "";
+    new->nazwa = NULL;
     new->next = lk;
     new->nr_wierzcholka = to;
     new->wartosc = waga;
@@ -101,8 +100,8 @@ void tpp_wewn( Lista_W* lv )
                 suma_y += (1/obecna_waga) * lv->lista[target]->poz[1];
                 temp = temp->next;
             }
-            lv->lista[i]->poz[0] = suma_x * suma_odw_wag;
-            lv->lista[i]->poz[1] = suma_y * suma_odw_wag;
+            lv->lista[i]->poz[0] = suma_x / suma_odw_wag;
+            lv->lista[i]->poz[1] = suma_y / suma_odw_wag;
         }
     }
 }

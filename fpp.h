@@ -5,8 +5,9 @@
 #include <math.h>
 #include "wczytaj.h"
 
-#define MAXDEG 16
 #define SKALA 5
+#define MAXITER 100
+#define MAXDEG 16
 
 typedef struct v
 {
