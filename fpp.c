@@ -4,7 +4,10 @@
 Lista_W* algo( lista_sasiedztw* m )
 {
     Lista_W* lv = lv_init( m );
-    triang( lv );
+
+    Sciany* s = sciany_init( lv );    //Dla Cezarego
+    triang( lv, s );
+
     fpp_zewn( lv );
 
     for(int i = 0; i < MAXITER; i++)
@@ -43,24 +46,42 @@ lista_k* add_sk(lista_k* lk, int to, double waga)
     return new;
 }
 
-void triang( Lista_W* lv )
+// Dla cezarego
+Sciany* sciany_init(Lista_W* lv)
 {
-    // Poki co nic
+    // Brute force poki co
+    lv->lista[1]->czy_zewn = 1;
     lv->lista[2]->czy_zewn = 1;
     lv->lista[3]->czy_zewn = 1;
     lv->lista[4]->czy_zewn = 1;
     lv->lista[5]->czy_zewn = 1;
-    lv->liczba_zewn = 4;
+    lv->liczba_zewn = 5;
 
+    Sciany* s = malloc(sizeof(Sciany));
+    s->rozmiar = 4;
+    s->s_zewn = 3;
+    s->len = malloc(4*sizeof(int));
+    s->sciany = malloc(4*sizeof(int*));
 
-    lv->lista[2]->krawedzie = add_sk(lv->lista[2]->krawedzie, 4, 18);
-    lv->lista[3]->krawedzie = add_sk(lv->lista[3]->krawedzie, 3, 18);
+    int s1[3] = {1,2,4};
+    s->len[0] = 3;
+    s->sciany[0] = s1;
+    int s2[3] = {1,4,5};
+    s->len[1] = 3;
+    s->sciany[1] = s2;
+    int s3[4] = {1,5,6,2};
+    s->len[2] = 4;
+    s->sciany[2] = s3;
+    int s4[7] = {1,2,3,2,4,5,6};
+    s->len[3] = 7;
+    s->sciany[3] = s4;
 
-    lv->lista[2]->krawedzie = add_sk(lv->lista[2]->krawedzie, 6, 10);
-    lv->lista[5]->krawedzie = add_sk(lv->lista[5]->krawedzie, 3, 10);
+    return s;
+}
 
-    lv->lista[0]->krawedzie = add_sk(lv->lista[0]->krawedzie, 6, 4);
-    lv->lista[5]->krawedzie = add_sk(lv->lista[5]->krawedzie, 1, 4);
+void triang( Lista_W* lv, Sciany* s )
+{
+    // To ja zrobie
 }
 
 void fpp_zewn( Lista_W* lv ) 
