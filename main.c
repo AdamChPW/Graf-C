@@ -3,6 +3,7 @@
 #include <string.h> // Potrzebne do strcmp
 
 #include "wczytaj.h"
+#include "fpp.h"
 
 
 void test(lista_sasiedztw* m){
@@ -10,7 +11,7 @@ void test(lista_sasiedztw* m){
         printf("v%d[ ", i+1);
         lista_k* temp  = m->lista[i];
         while(temp){
-            printf("%s ",temp->nazwa);
+            printf("%d ",temp->nr_wierzcholka);
             temp = temp->next;
         }
         printf("]\n");
@@ -77,13 +78,13 @@ int spr_macierz(lista_sasiedztw* l){
 
 // Wypisuje dane do pliku f
 // Zwraca 0 jak jest git (brakuje mi bool'a)
-int wyp_dane( FILE *f, lista_sasiedztw *l){
-    if (f == NULL || l == NULL) {
+int wyp_dane( FILE *f, Lista_W* lv ){
+    if (f == NULL || lv == NULL) {
         return 1; 
     }
 
-    for (int i = 0; i < l->rozmiar; i++) {
-        fprintf(f, "%d 0.0 0.0\n", i + 1);
+    for (int i = 0; i < lv->rozmiar; i++) {
+        fprintf(f, "%d %lf %lf\n", i+1, lv->lista[i]->poz[0], lv->lista[i]->poz[1]);
     }
 
     return 0;
@@ -96,7 +97,7 @@ int main(int argc, char** argv)
         fprintf(stderr, "Nie podano wejscie.\n");
         return 1;
     }
-
+    
     char *ext = strrchr(argv[1], '.');
     if (ext == NULL || (strcmp(ext, ".txt") != 0 && strcmp(ext, ".csv") != 0)) {
         fprintf(stderr, "Nieobslugiwany format pliku.\n");
@@ -108,7 +109,7 @@ int main(int argc, char** argv)
         fprintf(stderr, "Nie udalo sie utworzyc macierzy.\n");
         return 2;
     }
-    //test(macierz);
+    test(macierz);
 
     if( spr_macierz(macierz) != 0 ){
         fprintf(stderr, "Macierz nie jest odpowiednia do algorytmu.\n");
@@ -116,11 +117,11 @@ int main(int argc, char** argv)
         return 3;
     }
 
-    //algo(macierz); Nie robimy
+    Lista_W* lv = algo(macierz);
 
     FILE *out = argc > 2 ? fopen(argv[2], "w") : fopen("wyjscie", "w");
 
-    if( wyp_dane( out, macierz ) == 0 )
+    if( wyp_dane( out, lv ) == 0 )
         fprintf(stdout, "Wypisano odpowiedz do pliku.\n");
     else {
         fprintf(stderr, "Nie udalo sie zapisac odpowidzi\n");

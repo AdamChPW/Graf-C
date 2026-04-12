@@ -29,7 +29,7 @@ int add_k(lista_sasiedztw* m, int from, int to, char* nazwa, double waga)
     while(temp != NULL)
     {
         if(temp->nr_wierzcholka == to){
-            fprintf(stderr, "Istmieje juz droga z v%d do v%d", from, to);
+            fprintf(stderr, "Istnieje juz droga z v%d do v%d", from, to);
             free(temp);
             free(k->nazwa);
             free(k);
