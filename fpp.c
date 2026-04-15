@@ -146,10 +146,10 @@ void triang( Lista_W* lv, Sciany* s )
             pivot = s->sciany[i][0];
             target = s->sciany[i][kr];
         
-            previous = s->sciany[i][kr-1];  //Clockwise
+            previous = s->sciany[i][kr-1];  
             add_sk(lv, pivot, previous, target);
     
-            previous = s->sciany[i][kr+1];  //Anticlockwise
+            previous = s->sciany[i][s->len[i]-1];  //Poprzedni dla pierwszego wierz to ostatni.
             add_sk(lv, target, previous, pivot);
         }
     }
