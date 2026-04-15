@@ -36,14 +36,46 @@ Lista_W* lv_init( lista_sasiedztw* m )
     return lv;
 }
 
-lista_k* add_sk(lista_k* lk, int to, double waga)
+// Tworzy sztuczne polaczenie do triangulacji
+// Zastosowanie: add_sk(baza, 1, 3, 4) -> Dodaje krawedz od 1 do 4 po wystapieniu krawedzi 3.
+void add_sk(Lista_W* lv, int from, int after, int to)
 {
+    if(from == to){
+        //fprintf(stderr, "Proba dodania krawedzi od %d do %d\n", from, to);
+        return;
+    }
+
     lista_k* new = malloc(sizeof(lista_k));
     new->nazwa = NULL;
-    new->next = lk;
+    new->wartosc = 0;
     new->nr_wierzcholka = to;
-    new->wartosc = waga;
-    return new;
+
+    lista_k* temp = lv->lista[from-1]->krawedzie;
+
+    while(1 == 1)
+    {
+        if(temp->nr_wierzcholka == after)
+        {
+            if(temp->next != NULL && temp->next->nr_wierzcholka == to){
+                //fprintf(stderr, "Istnieje juz krawedz od v%d do v%d\n", from, to);
+                break;
+            }
+
+            //fprintf(stdout, "Dodano szt. krawedz (v%d, v%d)\n", from, to);
+            new->next = temp->next;
+            temp->next = new;
+            break;
+        }
+
+        temp = temp->next;
+        if(temp == NULL)
+        {
+            fprintf(stderr, "Nieznaleziono v%d w krawedziach v%d, dodano v%d na koncu listy.\n", after, from, to);
+            new->next = NULL;
+            temp = new;
+            break;
+        }
+    }
 }
 
 // Dla cezarego
@@ -63,25 +95,64 @@ Sciany* sciany_init(Lista_W* lv)
     s->len = malloc(4*sizeof(int));
     s->sciany = malloc(4*sizeof(int*));
 
-    int s1[3] = {1,2,4};
     s->len[0] = 3;
-    s->sciany[0] = s1;
-    int s2[3] = {1,4,5};
+    s->sciany[0] = malloc(3*sizeof(int));
+    s->sciany[0][0] = 1;
+    s->sciany[0][1] = 2;
+    s->sciany[0][2] = 4;
+
+
     s->len[1] = 3;
-    s->sciany[1] = s2;
-    int s3[4] = {1,5,6,2};
+    s->sciany[1] = malloc(3*sizeof(int));
+    s->sciany[1][0] = 1;
+    s->sciany[1][1] = 4;
+    s->sciany[1][2] = 5;
+
     s->len[2] = 4;
-    s->sciany[2] = s3;
-    int s4[7] = {1,2,3,2,4,5,6};
-    s->len[3] = 7;
-    s->sciany[3] = s4;
+    s->sciany[2] = malloc(4*sizeof(int));
+    s->sciany[2][0] = 1;
+    s->sciany[2][1] = 5;
+    s->sciany[2][2] = 6;
+    s->sciany[2][3] = 2;
+
+    s->len[3] = 6;
+    s->sciany[3] = malloc(6*sizeof(int));
+    s->sciany[3][0] = 2;
+    s->sciany[3][1] = 3;
+    s->sciany[3][2] = 2;
+    s->sciany[3][3] = 4;
+    s->sciany[3][4] = 5;
+    s->sciany[3][5] = 6;
 
     return s;
 }
 
 void triang( Lista_W* lv, Sciany* s )
 {
-    // To ja zrobie
+    int pivot = 0;
+    int previous = 0;
+    int target = 0;
+
+    for(int i = 0; i < s->rozmiar; i++)
+    {
+        if(s->s_zewn == i)
+            continue;
+
+        // Dziala tylko dla scian z wiecej niz 3 wierzcholki
+        // Dodaje szt. krawedzie od 3 do ostatniego punktu w scianie np. [1, 5, (6), 2] 
+        // Nie wiem czy to problem jak w liscie wystepujo ogony np. [(2,3,2),4,5,6] zamiast [2,4,5,6]
+        for(int kr = 2; kr < s->len[i]-1; kr++)     
+        {
+            pivot = s->sciany[i][0];
+            target = s->sciany[i][kr];
+        
+            previous = s->sciany[i][kr-1];  //Clockwise
+            add_sk(lv, pivot, previous, target);
+    
+            previous = s->sciany[i][kr+1];  //Anticlockwise
+            add_sk(lv, target, previous, pivot);
+        }
+    }
 }
 
 void fpp_zewn( Lista_W* lv ) 
@@ -101,6 +172,7 @@ void fpp_zewn( Lista_W* lv )
 void tpp_wewn( Lista_W* lv )
 {
     double obecna_waga;
+    double poprzednia_waga = 0;
     double suma_odw_wag;
     double suma_x;
     double suma_y;
@@ -114,8 +186,15 @@ void tpp_wewn( Lista_W* lv )
 
             lista_k* temp = lv->lista[i]->krawedzie;
             while(temp != NULL){
-                obecna_waga = temp->wartosc == 0 ? 0.00000001 : temp -> wartosc;
+
+                if(temp->nazwa == NULL)
+                    obecna_waga = poprzednia_waga;
+                else
+                    obecna_waga = temp->wartosc == 0 ? 0.00000001 : temp -> wartosc;
+                    
                 suma_odw_wag += 1/obecna_waga;
+                poprzednia_waga = obecna_waga;
+
                 int target = temp->nr_wierzcholka - 1;
                 suma_x += (1/obecna_waga) * lv->lista[target]->poz[0];
                 suma_y += (1/obecna_waga) * lv->lista[target]->poz[1];

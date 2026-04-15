@@ -34,7 +34,7 @@ Lista_W* algo( lista_sasiedztw* m );
 
 Lista_W* lv_init( lista_sasiedztw* m);
 
-lista_k* add_sk(lista_k* lk, int to, double waga);
+void add_sk(Lista_W* lv, int target, int after, int to);
 
 Sciany* sciany_init(Lista_W* lv);
 
