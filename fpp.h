@@ -23,12 +23,13 @@ typedef struct lv
     Wierzch **lista;
 } Lista_W;
 
-typedef struct s{
-       int rozmiar;
-       int s_zewn;   // index sciany zewn = 3
-       int* len;
-       int** sciany;     // { [1,2,4], [1,4,5], [1,5,6,2], [2,3,2,4,5,6] }
-}Sciany;
+
+typedef struct s {
+    int rozmiar;
+    int s_zewn;   // index sciany zewn
+    int* len;     // dlugosci scian
+    int** sciany; // wierzcholki scian
+} struktura_scian;
 
 Lista_W* algo( lista_sasiedztw* m );
 
@@ -36,9 +37,9 @@ Lista_W* lv_init( lista_sasiedztw* m);
 
 void add_sk(Lista_W* lv, int target, int after, int to);
 
-Sciany* sciany_init(Lista_W* lv);
+struktura_scian* sciany_init(Lista_W* lv);
 
-void triang( Lista_W* lv, Sciany* s );
+void triang( Lista_W* lv, struktura_scian* s );
 
 void fpp_zewn( Lista_W* lv );
 
