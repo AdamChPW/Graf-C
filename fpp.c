@@ -85,7 +85,7 @@ void add_sk(Lista_W* lv, int from, int after, int to)
 }
 
 // Dla cezarego
-Sciany* sciany_init(Lista_W* lv)
+struktura_scian* sciany_init(Lista_W* lv)
 {
     // Brute force poki co
     lv->lista[1]->czy_zewn = 1;
@@ -95,7 +95,7 @@ Sciany* sciany_init(Lista_W* lv)
     lv->lista[5]->czy_zewn = 1;
     lv->liczba_zewn = 5;
 
-    Sciany* s = malloc(sizeof(Sciany));
+    struktura_scian* s = malloc(sizeof(struktura_scian));
     s->rozmiar = 4;
     s->s_zewn = 3;
     s->len = malloc(4*sizeof(int));
@@ -133,7 +133,7 @@ Sciany* sciany_init(Lista_W* lv)
     return s;
 }
 
-void triang( Lista_W* lv, Sciany* s )
+void triang( Lista_W* lv, struktura_scian* s )
 {
     int pivot = 0;
     int previous = 0;
