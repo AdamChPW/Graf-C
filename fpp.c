@@ -153,6 +153,18 @@ void triang( Lista_W* lv, Sciany* s )
             add_sk(lv, target, previous, pivot);
         }
     }
+
+    for(int i = 0; i < lv->rozmiar; i++)
+    {
+        fprintf(stdout, "v%d [ ", i+1);
+        lista_k* temp = lv->lista[i]->krawedzie;
+        while(temp != NULL)
+        {
+            fprintf(stdout, "%d ", temp->nr_wierzcholka);
+            temp = temp->next;
+        }
+        fprintf(stdout, "]\n");
+    }
 }
 
 void fpp_zewn( Lista_W* lv ) 
