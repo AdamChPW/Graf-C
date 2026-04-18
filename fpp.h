@@ -8,6 +8,9 @@
 #define SKALA 5
 #define MAXITER 100
 #define MAXDEG 16
+#ifndef M_PI
+#define M_PI 3.14159265358979323846 //--pedantic
+#endif
 
 typedef struct v
 {
@@ -39,10 +42,13 @@ void add_sk(Lista_W* lv, int target, int after, int to);
 
 struktura_scian* sciany_init(Lista_W* lv);
 
+struktura_scian* demoucron(lista_sasiedztw* graf);
+
 void triang( Lista_W* lv, struktura_scian* s );
 
 void fpp_zewn( Lista_W* lv );
 
 void tpp_wewn( Lista_W* lv );
 
+void free_struktura_scian(struktura_scian* s);
 #endif

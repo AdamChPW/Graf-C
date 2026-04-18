@@ -1,9 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include <limits.h>
 #include "wczytaj.h"
 #include "fpp.h"
-
-//algorytm demoucrona
 
 typedef struct {
     int* wierzcholki; 
@@ -19,11 +19,10 @@ typedef struct {
     int ile_pasuje;
 } Segment;
 
-
 int start_cyklu = -1;
 int koniec_cyklu = -1;
 
-//funkcje
+// Funkcje pomocnicze
 
 int czy_w_tablicy(int* tablica, int rozmiar, int wartosc) {
     for (int i = 0; i < rozmiar; i++) if (tablica[i] == wartosc) return 1;
@@ -40,70 +39,63 @@ int znajdz_indeks_w_scianie(Sciana* sciana, int v) {
     return -1;
 }
 
-//
-void dfs_szukaj_cyklu(lista_sasiedztw* graf, int u, int p, int* color, int* parent) {
-    color[u] = 1;
-    parent[u] = p;
+void dfs_szukaj_cyklu(lista_sasiedztw* graf, int u, int p, int* kolor, int* rodzic) {
+    kolor[u] = 1;
+    rodzic[u] = p;
     lista_k* sasiad = graf->lista[u];
     
     while (sasiad != NULL) {
-        int v = sasiad->nr_wierzcholka;
+        int v = sasiad->nr_wierzcholka - 1;
         if (v == p) { sasiad = sasiad->next; continue; }
-        if (color[v] == 1) {
+        if (kolor[v] == 1) {
             if (start_cyklu == -1) { start_cyklu = v; koniec_cyklu = u; }
             return;
-        } else if (color[v] == 0) {
-            dfs_szukaj_cyklu(graf, v, u, color, parent);
+        } else if (kolor[v] == 0) {
+            dfs_szukaj_cyklu(graf, v, u, kolor, rodzic);
             if (start_cyklu != -1) return;
         }
         sasiad = sasiad->next;
     }
-    color[u] = 2;
+    kolor[u] = 2;
 }
 
-void eksploruj_segment(lista_sasiedztw* graf, int u, int* in_drawing, int* visited, Segment* seg) {
-    visited[u] = 1;
+void eksploruj_segment(lista_sasiedztw* graf, int u, int* narysowane, int* odwiedzone, Segment* seg) {
+    odwiedzone[u] = 1;
     seg->wierzcholki[seg->ile_wierzcholkow++] = u;
     lista_k* sasiad = graf->lista[u];
     
     while (sasiad != NULL) {
-        int v = sasiad->nr_wierzcholka;
-        if (in_drawing[v] == 1) {
+        int v = sasiad->nr_wierzcholka - 1;
+        if (narysowane[v] == 1) {
             if (!czy_w_tablicy(seg->punkty_styku, seg->ile_styku, v)) {
                 seg->punkty_styku[seg->ile_styku++] = v;
             }
-        } else if (in_drawing[v] == 0 && visited[v] == 0) {
-            eksploruj_segment(graf, v, in_drawing, visited, seg);
+        } else if (narysowane[v] == 0 && odwiedzone[v] == 0) {
+            eksploruj_segment(graf, v, narysowane, odwiedzone, seg);
         }
         sasiad = sasiad->next;
     }
 }
 
-// ==========================================
-// 5. WYCIĄGANIE ŚCIEŻKI Z SEGMENTU
-// ==========================================
-int dfs_sciezka(lista_sasiedztw* graf, int u, int cel_v, int* in_drawing, int* visited, int* sciezka, int* dlugosc) {
-    visited[u] = 1;
+int dfs_sciezka(lista_sasiedztw* graf, int u, int cel_v, int* narysowane, int* odwiedzone, int* sciezka, int* dlugosc) {
+    odwiedzone[u] = 1;
     sciezka[(*dlugosc)++] = u;
     
     if (u == cel_v) return 1;
 
     lista_k* sasiad = graf->lista[u];
     while (sasiad != NULL) {
-        int v = sasiad->nr_wierzcholka;
-        if (!visited[v] && (in_drawing[v] == 0 || v == cel_v)) {
-            if (dfs_sciezka(graf, v, cel_v, in_drawing, visited, sciezka, dlugosc)) return 1;
+        int v = sasiad->nr_wierzcholka - 1;
+        if (!odwiedzone[v] && (narysowane[v] == 0 || v == cel_v)) {
+            if (dfs_sciezka(graf, v, cel_v, narysowane, odwiedzone, sciezka, dlugosc)) return 1;
         }
         sasiad = sasiad->next;
     }
     
-    (*dlugosc)--; // Backtracking
+    (*dlugosc)--; 
     return 0;
 }
 
-// ==========================================
-// 6. ROZDZIELANIE ŚCIANY
-// ==========================================
 void krok_d_rozdziel_sciane(Sciana* sciany, int* liczba_scian, int index_sciany, int* sciezka, int dl_sciezki) {
     Sciana stara = sciany[index_sciany];
     int idx_A = znajdz_indeks_w_scianie(&stara, sciezka[0]);
@@ -136,40 +128,49 @@ void krok_d_rozdziel_sciane(Sciana* sciany, int* liczba_scian, int index_sciany,
     (*liczba_scian)++;
 }
 
-// ==========================================
-// 7. GŁÓWNY ALGORYTM DEMOUCRONA
-// ==========================================
+// Funkcja zwalniająca strukturę ścian
+void free_struktura_scian(struktura_scian* s) {
+    if (s == NULL) return;
+    for (int i = 0; i < s->rozmiar; i++) {
+        free(s->sciany[i]);
+    }
+    free(s->len);
+    free(s->sciany);
+    free(s);
+}
+
+// GŁÓWNY ALGORYTM DEMOUCRONA
 struktura_scian* demoucron(lista_sasiedztw* graf) {
     int V = graf->rozmiar;
-    int* in_drawing = calloc(V, sizeof(int));
-    
-    int* color = calloc(V, sizeof(int));
-    int* parent = malloc(V * sizeof(int));
-    for(int i=0; i<V; i++) parent[i] = -1;
+    // ZMIANA: in_drawing -> narysowane
+    int* narysowane = calloc(V, sizeof(int));
+    int* kolor = calloc(V, sizeof(int));
+    int* rodzic = malloc(V * sizeof(int));
+    for(int i=0; i<V; i++) rodzic[i] = -1;
 
     start_cyklu = -1;
     koniec_cyklu = -1;
     
-    // Szukanie pierwszego cyklu
     for (int i = 0; i < V; i++) {
-        if (color[i] == 0 && start_cyklu == -1) dfs_szukaj_cyklu(graf, i, -1, color, parent);
+        if (kolor[i] == 0 && start_cyklu == -1) dfs_szukaj_cyklu(graf, i, -1, kolor, rodzic);
     }
 
     if (start_cyklu == -1) { 
-        printf("BLAD: Brak cykli w grafie (drzewo/las).\n"); 
-        free(color); free(parent); free(in_drawing);
+        fprintf(stderr, "BLAD: Brak cykli w grafie (drzewo/las).\n"); 
+        free(kolor); free(rodzic); free(narysowane);
         return NULL; 
     }
 
     int* cykl = malloc(V * sizeof(int));
     int dl_cyklu = 0;
     int curr = koniec_cyklu;
-    while (curr != start_cyklu) { cykl[dl_cyklu++] = curr; curr = parent[curr]; }
+    while (curr != start_cyklu) { cykl[dl_cyklu++] = curr; curr = rodzic[curr]; }
     cykl[dl_cyklu++] = start_cyklu;
 
-    for (int i = 0; i < dl_cyklu; i++) in_drawing[cykl[i]] = 1;
+    for (int i = 0; i < dl_cyklu; i++) narysowane[cykl[i]] = 1;
 
-    Sciana* sciany = malloc(200 * sizeof(Sciana)); // 200 dla bezpieczeństwa z Eulerem
+    // 2*V (Euler)
+    Sciana* sciany = malloc((2 * V) * sizeof(Sciana)); 
     int liczba_scian = 2;
     
     sciany[0].wierzcholki = malloc(dl_cyklu * sizeof(int));
@@ -184,25 +185,24 @@ struktura_scian* demoucron(lista_sasiedztw* graf) {
     while (1) {
         Segment* segmenty = malloc(V * sizeof(Segment));
         int liczba_segmentow = 0;
-        int* visited = calloc(V, sizeof(int));
+        int* odwiedzone = calloc(V, sizeof(int));
 
         for (int i = 0; i < V; i++) {
-            if (in_drawing[i] == 0 && visited[i] == 0) {
+            if (narysowane[i] == 0 && odwiedzone[i] == 0) {
                 segmenty[liczba_segmentow].wierzcholki = malloc(V * sizeof(int));
                 segmenty[liczba_segmentow].punkty_styku = malloc(V * sizeof(int));
-                segmenty[liczba_segmentow].pasujace_sciany = malloc(liczba_scian * sizeof(int));
+                segmenty[liczba_segmentow].pasujace_sciany = malloc((liczba_scian + 1) * sizeof(int));
                 segmenty[liczba_segmentow].ile_wierzcholkow = 0;
                 segmenty[liczba_segmentow].ile_styku = 0;
                 segmenty[liczba_segmentow].ile_pasuje = 0;
-                eksploruj_segment(graf, i, in_drawing, visited, &segmenty[liczba_segmentow]);
+                eksploruj_segment(graf, i, narysowane, odwiedzone, &segmenty[liczba_segmentow]);
                 liczba_segmentow++;
             }
         }
         
         if (liczba_segmentow == 0) { 
-            free(segmenty); 
-            free(visited); 
-            break; // Cały graf narysowany
+            free(segmenty); free(odwiedzone); 
+            break; 
         }
 
         for (int s = 0; s < liczba_segmentow; s++) {
@@ -215,7 +215,7 @@ struktura_scian* demoucron(lista_sasiedztw* graf) {
             }
         }
 
-        int min_pasuje = 999999, wybrany_idx = -1;
+        int min_pasuje = INT_MAX, wybrany_idx = -1;
         for (int i = 0; i < liczba_segmentow; i++) {
             if (segmenty[i].ile_pasuje < min_pasuje) { 
                 min_pasuje = segmenty[i].ile_pasuje; 
@@ -224,10 +224,10 @@ struktura_scian* demoucron(lista_sasiedztw* graf) {
         }
 
         if (min_pasuje == 0) { 
-            printf("BLAD: Graf nie jest planarny!\n"); 
-            free(color); free(parent); free(cykl); free(in_drawing);
+            fprintf(stderr, "BLAD: Graf nie jest planarny!\n"); 
+            free(kolor); free(rodzic); free(cykl); free(narysowane);
             for(int i = 0; i < liczba_scian; i++) free(sciany[i].wierzcholki);
-            free(sciany);
+            free(sciany); free(segmenty); free(odwiedzone);
             return NULL; 
         }
 
@@ -236,14 +236,14 @@ struktura_scian* demoucron(lista_sasiedztw* graf) {
 
         int* sciezka = malloc(V * sizeof(int));
         int dl_sciezki = 0;
-        int* visited_sciezka = calloc(V, sizeof(int));
+        int* odwiedzone_sciezka = calloc(V, sizeof(int));
         
         int start_styku = wybrany->punkty_styku[0];
-        int cel_styku = wybrany->punkty_styku[1]; 
+        int cel_styku = (wybrany->ile_styku > 1) ? wybrany->punkty_styku[1] : wybrany->punkty_styku[0]; 
         
-        dfs_sciezka(graf, start_styku, cel_styku, in_drawing, visited_sciezka, sciezka, &dl_sciezki);
+        dfs_sciezka(graf, start_styku, cel_styku, narysowane, odwiedzone_sciezka, sciezka, &dl_sciezki);
 
-        for(int i=1; i < dl_sciezki-1; i++) in_drawing[sciezka[i]] = 1;
+        for(int i=1; i < dl_sciezki-1; i++) narysowane[sciezka[i]] = 1;
 
         krok_d_rozdziel_sciane(sciany, &liczba_scian, cel_sciana, sciezka, dl_sciezki);
 
@@ -252,12 +252,9 @@ struktura_scian* demoucron(lista_sasiedztw* graf) {
             free(segmenty[i].punkty_styku); 
             free(segmenty[i].pasujace_sciany);
         }
-        free(segmenty); free(visited); free(sciezka); free(visited_sciezka);
+        free(segmenty); free(odwiedzone); free(sciezka); free(odwiedzone_sciezka);
     }
 
-    // ==========================================
-    // 8. PAKOWANIE DO DOCELOWEJ STRUKTURY
-    // ==========================================
     struktura_scian* wynik = malloc(sizeof(struktura_scian));
     wynik->rozmiar = liczba_scian;
     wynik->len = malloc(liczba_scian * sizeof(int));
@@ -271,7 +268,7 @@ struktura_scian* demoucron(lista_sasiedztw* graf) {
         wynik->sciany[i] = malloc(sciany[i].rozmiar * sizeof(int));
         
         for (int j = 0; j < sciany[i].rozmiar; j++) {
-            wynik->sciany[i][j] = sciany[i].wierzcholki[j];
+            wynik->sciany[i][j] = sciany[i].wierzcholki[j] + 1; // Powrót do numeracji 1..V
         }
 
         if (wynik->len[i] > max_len) {
@@ -282,11 +279,7 @@ struktura_scian* demoucron(lista_sasiedztw* graf) {
     
     wynik->s_zewn = index_zewn;
 
-    // Sprzątanie po strukturach wewnętrznych
-    free(color); 
-    free(parent); 
-    free(cykl); 
-    free(in_drawing);
+    free(kolor); free(rodzic); free(cykl); free(narysowane);
     for(int i = 0; i < liczba_scian; i++) free(sciany[i].wierzcholki);
     free(sciany);
 

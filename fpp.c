@@ -5,14 +5,20 @@ Lista_W* algo( lista_sasiedztw* m )
 {
     Lista_W* lv = lv_init( m );
 
-    struktura_scian* s = sciany_init( lv );    //Dla Cezarego
+    //struktura_scian* s = sciany_init( lv );    //Dla Cezarego
+    struktura_scian* s = demoucron( m );
+    if( s == NULL)
+    {
+        fprintf(stderr, "Graf nie planarny lub bez cykli\n");
+        return lv;
+    }
     triang( lv, s );
-
     fpp_zewn( lv );
 
     for(int i = 0; i < MAXITER; i++)
         tpp_wewn( lv );
 
+    free_struktura_scian(s);  
     return lv;
 }
 
