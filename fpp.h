@@ -46,6 +46,8 @@ void triang( Lista_W* lv, Sciany* s );
 =======
 struktura_scian* demoucron(lista_sasiedztw* graf);
 
+struktura_scian* demoucron(lista_sasiedztw* graf);
+
 void triang( Lista_W* lv, struktura_scian* s );
 >>>>>>> 8967c16 (demoucron)
 
