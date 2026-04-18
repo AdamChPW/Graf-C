@@ -5,6 +5,7 @@ Lista_W* algo( lista_sasiedztw* m )
 {
     Lista_W* lv = lv_init( m );
 
+    fprintf(stderr, "Test\n");
     //struktura_scian* s = sciany_init( lv );    //Dla Cezarego
     struktura_scian* s = demoucron( m );
     if( s == NULL)
@@ -12,7 +13,10 @@ Lista_W* algo( lista_sasiedztw* m )
         fprintf(stderr, "Graf nie planarny lub bez cykli\n");
         return lv;
     }
+    fprintf(stderr, "Przeszlo\n");
+
     triang( lv, s );
+
     fpp_zewn( lv );
 
     for(int i = 0; i < MAXITER; i++)
@@ -84,7 +88,7 @@ void add_sk(Lista_W* lv, int from, int after, int to)
     }
 }
 
-// Dla cezarego
+/* Dla cezarego
 struktura_scian* sciany_init(Lista_W* lv)
 {
     // Brute force poki co
@@ -131,7 +135,7 @@ struktura_scian* sciany_init(Lista_W* lv)
     s->sciany[3][5] = 6;
 
     return s;
-}
+} */
 
 void triang( Lista_W* lv, struktura_scian* s )
 {
