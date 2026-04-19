@@ -5,6 +5,7 @@ Lista_W* algo( lista_sasiedztw* m )
 {
     Lista_W* lv = lv_init( m );
 
+    fprintf(stderr, "Test\n");
     //struktura_scian* s = sciany_init( lv );    //Dla Cezarego
     struktura_scian* s = demoucron( m );
     if( s == NULL)
@@ -12,9 +13,12 @@ Lista_W* algo( lista_sasiedztw* m )
         fprintf(stderr, "Graf nie planarny lub bez cykli\n");
         return lv;
     }
+
+    fprintf(stderr, "Przeszlo\n");
     wypisz_system_rotacyjny(s, m->rozmiar);
     
     triang( lv, s );
+
     fpp_zewn( lv );
 
     for(int i = 0; i < MAXITER; i++)
@@ -86,7 +90,7 @@ void add_sk(Lista_W* lv, int from, int after, int to)
     }
 }
 
-// Dla cezarego
+/* Dla cezarego
 struktura_scian* sciany_init(Lista_W* lv)
 {
     // Brute force poki co
@@ -133,7 +137,7 @@ struktura_scian* sciany_init(Lista_W* lv)
     s->sciany[3][5] = 6;
 
     return s;
-}
+} */
 
 void triang( Lista_W* lv, struktura_scian* s )
 {
@@ -160,6 +164,18 @@ void triang( Lista_W* lv, struktura_scian* s )
             previous = s->sciany[i][s->len[i]-1];  //Poprzedni dla pierwszego wierz to ostatni.
             add_sk(lv, target, previous, pivot);
         }
+    }
+
+    for(int i = 0; i < lv->rozmiar; i++)
+    {
+        fprintf(stdout, "v%d [ ", i+1);
+        lista_k* temp = lv->lista[i]->krawedzie;
+        while(temp != NULL)
+        {
+            fprintf(stdout, "%d ", temp->nr_wierzcholka);
+            temp = temp->next;
+        }
+        fprintf(stdout, "]\n");
     }
 }
 

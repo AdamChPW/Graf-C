@@ -54,4 +54,5 @@ void free_struktura_scian(struktura_scian* s);
 
 void wypisz_system_rotacyjny(struktura_scian* s, int V);
 
+
 #endif
