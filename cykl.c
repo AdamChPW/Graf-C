@@ -139,6 +139,44 @@ void free_struktura_scian(struktura_scian* s) {
     free(s);
 }
 
+
+void wypisz_system_rotacyjny(struktura_scian* s, int V) {
+    printf("\nPlanar Embedding posortowani sasiedzi anticlockwise\n");
+    
+    //dla każdego wierzchołka w grafie
+    for (int v = 1; v <= V; v++) {
+        printf("v%d [ ", v);
+        
+        int* nastepny = calloc(V + 1, sizeof(int));
+        int pierwszy_sasiad = 0;
+
+        //szukamy wierzchołka v w każdej ścianie
+        for (int i = 0; i < s->rozmiar; i++) {
+            int len = s->len[i];
+            for (int j = 0; j < len; j++) {
+                if (s->sciany[i][j] == v) {
+                    int u = s->sciany[i][(j - 1 + len) % len];
+                    int w = s->sciany[i][(j + 1) % len];
+                    
+                    nastepny[w] = u;
+                    pierwszy_sasiad = w;
+                }
+            }
+        }
+        //wypisujemy sąsiadów w kółko
+        if (pierwszy_sasiad != 0) {
+            int curr = pierwszy_sasiad;
+            do {
+                printf("%d ", curr);
+                curr = nastepny[curr];
+            } while (curr != pierwszy_sasiad && curr != 0);
+        }
+        printf("]\n");
+        free(nastepny);
+    }
+    printf("\n\n");
+}
+
 // GŁÓWNY ALGORYTM DEMOUCRONA
 struktura_scian* demoucron(lista_sasiedztw* graf) {
     int V = graf->rozmiar;

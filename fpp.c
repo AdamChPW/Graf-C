@@ -12,6 +12,8 @@ Lista_W* algo( lista_sasiedztw* m )
         fprintf(stderr, "Graf nie planarny lub bez cykli\n");
         return lv;
     }
+    wypisz_system_rotacyjny(s, m->rozmiar);
+    
     triang( lv, s );
     fpp_zewn( lv );
 
