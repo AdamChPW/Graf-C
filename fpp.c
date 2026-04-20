@@ -14,6 +14,14 @@ Lista_W* algo( lista_sasiedztw* m )
         return lv;
     }
 
+    int zewn_idx = s->s_zewn;
+    lv->liczba_zewn = s->len[zewn_idx];
+    for (int i = 0; i < s->len[zewn_idx]; i++) 
+    {
+        int wierzcholek = s->sciany[zewn_idx][i];
+        lv->lista[wierzcholek - 1]->czy_zewn = 1;
+    }
+
     fprintf(stderr, "Przeszlo\n");
     wypisz_system_rotacyjny(s, m->rozmiar);
     

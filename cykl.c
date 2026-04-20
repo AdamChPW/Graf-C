@@ -77,22 +77,35 @@ void eksploruj_segment(lista_sasiedztw* graf, int u, int* narysowane, int* odwie
     }
 }
 
-int dfs_sciezka(lista_sasiedztw* graf, int u, int cel_v, int* narysowane, int* odwiedzone, int* sciezka, int* dlugosc) {
+int dfs_sciezka(lista_sasiedztw* graf, int u, int cel_v, int* narysowane, int* odwiedzone, int* sciezka, int* dlugosc, Segment* seg) {
     odwiedzone[u] = 1;
     sciezka[(*dlugosc)++] = u;
-    
-    if (u == cel_v) return 1;
+
+    if (u == cel_v && (*dlugosc) > 1) {
+        odwiedzone[u] = 0;
+        return 1;
+    }
 
     lista_k* sasiad = graf->lista[u];
     while (sasiad != NULL) {
         int v = sasiad->nr_wierzcholka - 1;
-        if (!odwiedzone[v] && (narysowane[v] == 0 || v == cel_v)) {
-            if (dfs_sciezka(graf, v, cel_v, narysowane, odwiedzone, sciezka, dlugosc)) return 1;
+
+        int can_visit = 0;
+        if (!odwiedzone[v]) {
+            if (czy_w_tablicy(seg->wierzcholki, seg->ile_wierzcholkow, v)) can_visit = 1;
+        }
+        if (v == cel_v && (*dlugosc) > 1) {
+            can_visit = 1;
+        }
+
+        if (can_visit) {
+            if (dfs_sciezka(graf, v, cel_v, narysowane, odwiedzone, sciezka, dlugosc, seg)) return 1;
         }
         sasiad = sasiad->next;
     }
-    
-    (*dlugosc)--; 
+
+    (*dlugosc)--;
+    odwiedzone[u] = 0;
     return 0;
 }
 
@@ -279,11 +292,14 @@ struktura_scian* demoucron(lista_sasiedztw* graf) {
         int start_styku = wybrany->punkty_styku[0];
         int cel_styku = (wybrany->ile_styku > 1) ? wybrany->punkty_styku[1] : wybrany->punkty_styku[0]; 
         
-        dfs_sciezka(graf, start_styku, cel_styku, narysowane, odwiedzone_sciezka, sciezka, &dl_sciezki);
-
-        for(int i=1; i < dl_sciezki-1; i++) narysowane[sciezka[i]] = 1;
-
-        krok_d_rozdziel_sciane(sciany, &liczba_scian, cel_sciana, sciezka, dl_sciezki);
+        if (dfs_sciezka(graf, start_styku, cel_styku, narysowane, odwiedzone_sciezka, sciezka, &dl_sciezki, wybrany)) {
+            for(int i=1; i < dl_sciezki-1; i++) narysowane[sciezka[i]] = 1;
+            krok_d_rozdziel_sciane(sciany, &liczba_scian, cel_sciana, sciezka, dl_sciezki);
+        } else {
+            fprintf(stderr, "BLAD: Algorytm utknal, brak trasy przez segment!\n");
+            free(sciezka); free(odwiedzone_sciezka);
+            break; 
+        }
 
         for(int i=0; i<liczba_segmentow; i++) {
             free(segmenty[i].wierzcholki); 

@@ -56,6 +56,7 @@ lista_sasiedztw* w_dane(char* f_name)
         return NULL;
     }
     m->rozmiar = 0;
+    m->lista = NULL;
 
     char buffer[BUFSIZE];
     while(fgets(buffer, BUFSIZE, in) != NULL){
@@ -88,6 +89,8 @@ lista_sasiedztw* w_dane(char* f_name)
                 fclose(in);
                 return NULL;
             }
+            for (int i = m->rozmiar; i < new_size; i++) m->lista[i] = NULL;
+            
             m->rozmiar = new_size;
         }
         
