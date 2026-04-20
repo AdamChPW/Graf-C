@@ -3,7 +3,7 @@
 #include <string.h>
 #include <limits.h>
 #include "wczytaj.h"
-#include "fpp.h"
+#include "tutte.h"
 
 typedef struct {
     int* wierzcholki; 

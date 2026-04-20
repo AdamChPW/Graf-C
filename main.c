@@ -3,7 +3,7 @@
 #include <string.h> // Potrzebne do strcmp
 
 #include "wczytaj.h"
-#include "fpp.h"
+#include "tutte.h"
 
 
 void test(lista_sasiedztw* m){

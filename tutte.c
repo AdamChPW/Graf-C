@@ -1,4 +1,4 @@
-#include "fpp.h"
+#include "tutte.h"
 #include <stdio.h>
 
 Lista_W* algo( lista_sasiedztw* m )
@@ -43,10 +43,10 @@ Lista_W* algo( lista_sasiedztw* m )
 
     triang( lv, s );
     
-    fpp_zewn( lv );
+    tutte_zewn( lv );
     
     for(int i = 0; i < MAXITER; i++)
-        tpp_wewn( lv );
+        tutte_wewn( lv );
 
     free_struktura_scian(s);  
     return lv;
@@ -156,7 +156,7 @@ void triang( Lista_W* lv, struktura_scian* s )
     }
 }
 
-void fpp_zewn( Lista_W* lv ) 
+void tutte_zewn( Lista_W* lv ) 
 {
     double angle = 2 * M_PI / lv->liczba_zewn;
     
@@ -170,7 +170,7 @@ void fpp_zewn( Lista_W* lv )
     }
 }
 
-void tpp_wewn( Lista_W* lv )
+void tutte_wewn( Lista_W* lv )
 {
     double obecna_waga;
     double poprzednia_waga = 0;

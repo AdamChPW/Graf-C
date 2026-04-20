@@ -1,5 +1,5 @@
-#ifndef _FPP_H_
-#define _FPP_H_
+#ifndef _TUTTE_H_
+#define _TUTTE_H_
     
 #include <stdlib.h>
 #include <math.h>
@@ -44,9 +44,9 @@ struktura_scian* demoucron(lista_sasiedztw* graf);
 
 void triang( Lista_W* lv, struktura_scian* s );
 
-void fpp_zewn( Lista_W* lv );
+void tutte_zewn( Lista_W* lv );
 
-void tpp_wewn( Lista_W* lv );
+void tutte_wewn( Lista_W* lv );
 
 void free_struktura_scian(struktura_scian* s);
 
