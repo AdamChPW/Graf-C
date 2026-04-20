@@ -5,8 +5,6 @@ Lista_W* algo( lista_sasiedztw* m )
 {
     Lista_W* lv = lv_init( m );
 
-    fprintf(stderr, "Test\n");
-    //struktura_scian* s = sciany_init( lv );    //Dla Cezarego
     struktura_scian* s = demoucron( m );
     if( s == NULL)
     {
@@ -22,13 +20,31 @@ Lista_W* algo( lista_sasiedztw* m )
         lv->lista[wierzcholek - 1]->czy_zewn = 1;
     }
 
-    fprintf(stderr, "Przeszlo\n");
     wypisz_system_rotacyjny(s, m->rozmiar);
     
+    /*=============================================================*/
+    // Testy integracji demoucron-triangulacja
+    fprintf(stderr, "\nTest\n");
+
+    fprintf(stderr, "Znalezione sciany:\n");
+    for(int i = 0; i<s->rozmiar; i++){
+        fprintf(stderr, "%d: [ ",i);
+
+        for(int l = 0; l < s->len[i]; l++){
+            fprintf(stderr, "%d ",s->sciany[i][l]);
+        }
+
+        fprintf(stderr, "]\n");
+    }
+    fprintf(stderr, "Index Sciany glownej: %d\n",s->s_zewn);
+
+    fprintf(stderr, "Przeszlo\n\n");
+    /*=============================================================*/
+
     triang( lv, s );
-
+    
     fpp_zewn( lv );
-
+    
     for(int i = 0; i < MAXITER; i++)
         tpp_wewn( lv );
 
@@ -98,54 +114,6 @@ void add_sk(Lista_W* lv, int from, int after, int to)
     }
 }
 
-/* Dla cezarego
-struktura_scian* sciany_init(Lista_W* lv)
-{
-    // Brute force poki co
-    lv->lista[1]->czy_zewn = 1;
-    lv->lista[2]->czy_zewn = 1;
-    lv->lista[3]->czy_zewn = 1;
-    lv->lista[4]->czy_zewn = 1;
-    lv->lista[5]->czy_zewn = 1;
-    lv->liczba_zewn = 5;
-
-    struktura_scian* s = malloc(sizeof(struktura_scian));
-    s->rozmiar = 4;
-    s->s_zewn = 3;
-    s->len = malloc(4*sizeof(int));
-    s->sciany = malloc(4*sizeof(int*));
-
-    s->len[0] = 3;
-    s->sciany[0] = malloc(3*sizeof(int));
-    s->sciany[0][0] = 1;
-    s->sciany[0][1] = 2;
-    s->sciany[0][2] = 4;
-
-
-    s->len[1] = 3;
-    s->sciany[1] = malloc(3*sizeof(int));
-    s->sciany[1][0] = 1;
-    s->sciany[1][1] = 4;
-    s->sciany[1][2] = 5;
-
-    s->len[2] = 4;
-    s->sciany[2] = malloc(4*sizeof(int));
-    s->sciany[2][0] = 1;
-    s->sciany[2][1] = 5;
-    s->sciany[2][2] = 6;
-    s->sciany[2][3] = 2;
-
-    s->len[3] = 6;
-    s->sciany[3] = malloc(6*sizeof(int));
-    s->sciany[3][0] = 2;
-    s->sciany[3][1] = 3;
-    s->sciany[3][2] = 2;
-    s->sciany[3][3] = 4;
-    s->sciany[3][4] = 5;
-    s->sciany[3][5] = 6;
-
-    return s;
-} */
 
 void triang( Lista_W* lv, struktura_scian* s )
 {
@@ -174,6 +142,7 @@ void triang( Lista_W* lv, struktura_scian* s )
         }
     }
 
+    fprintf(stdout, "Po triangualizacji: \n");
     for(int i = 0; i < lv->rozmiar; i++)
     {
         fprintf(stdout, "v%d [ ", i+1);
