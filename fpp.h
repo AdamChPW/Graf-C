@@ -40,8 +40,6 @@ Lista_W* lv_init( lista_sasiedztw* m);
 
 void add_sk(Lista_W* lv, int target, int after, int to);
 
-struktura_scian* sciany_init(Lista_W* lv);
-
 struktura_scian* demoucron(lista_sasiedztw* graf);
 
 void triang( Lista_W* lv, struktura_scian* s );
