@@ -27,7 +27,7 @@ Lista_W* algo( lista_sasiedztw* m )
     
     triang( lv, s );
 
-    fpp_zewn( lv );
+    fpp_zewn( lv, s );
 
     for(int i = 0; i < MAXITER; i++)
         tpp_wewn( lv );
@@ -187,17 +187,17 @@ void triang( Lista_W* lv, struktura_scian* s )
     }
 }
 
-void fpp_zewn( Lista_W* lv ) 
+void fpp_zewn( Lista_W* lv, struktura_scian* s ) 
 {
-    double angle = 2 * M_PI / lv->liczba_zewn;
+    int zewn_idx = s->s_zewn;
+    int dlugosc = s->len[zewn_idx];
+    double angle = 2 * M_PI / dlugosc;
     
-    int k = 0;
-    for(int i = 0; i<lv->rozmiar; i++){
-        if(lv->lista[i]->czy_zewn == 1){
-            lv->lista[i]->poz[0] = SKALA * cos( k * angle );
-            lv->lista[i]->poz[1] = SKALA * sin( k * angle );
-            k++;
-        }
+    for(int i = 0; i < dlugosc; i++){
+        int wierzcholek = s->sciany[zewn_idx][i] - 1; 
+        
+        lv->lista[wierzcholek]->poz[0] = SKALA * cos( i * angle );
+        lv->lista[wierzcholek]->poz[1] = SKALA * sin( i * angle );
     }
 }
 

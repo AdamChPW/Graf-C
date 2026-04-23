@@ -193,11 +193,16 @@ void wypisz_system_rotacyjny(struktura_scian* s, int V) {
 // GŁÓWNY ALGORYTM DEMOUCRONA
 struktura_scian* demoucron(lista_sasiedztw* graf) {
     int V = graf->rozmiar;
-    // ZMIANA: in_drawing -> narysowane
+    
     int* narysowane = calloc(V, sizeof(int));
     int* kolor = calloc(V, sizeof(int));
     int* rodzic = malloc(V * sizeof(int));
     for(int i=0; i<V; i++) rodzic[i] = -1;
+
+    int** uzyta_krawedz = malloc(V * sizeof(int*));
+    for(int i = 0; i < V; i++) {
+        uzyta_krawedz[i] = calloc(V, sizeof(int));
+    }
 
     start_cyklu = -1;
     koniec_cyklu = -1;
@@ -209,6 +214,8 @@ struktura_scian* demoucron(lista_sasiedztw* graf) {
     if (start_cyklu == -1) { 
         fprintf(stderr, "BLAD: Brak cykli w grafie (drzewo/las).\n"); 
         free(kolor); free(rodzic); free(narysowane);
+        for(int i=0; i<V; i++) free(uzyta_krawedz[i]);
+        free(uzyta_krawedz);
         return NULL; 
     }
 
@@ -218,7 +225,13 @@ struktura_scian* demoucron(lista_sasiedztw* graf) {
     while (curr != start_cyklu) { cykl[dl_cyklu++] = curr; curr = rodzic[curr]; }
     cykl[dl_cyklu++] = start_cyklu;
 
-    for (int i = 0; i < dl_cyklu; i++) narysowane[cykl[i]] = 1;
+    for (int i = 0; i < dl_cyklu; i++) {
+        narysowane[cykl[i]] = 1;
+        int u = cykl[i];
+        int v = cykl[(i + 1) % dl_cyklu];
+        uzyta_krawedz[u][v] = 1;
+        uzyta_krawedz[v][u] = 1;
+    }
 
     // 2*V (Euler)
     Sciana* sciany = malloc((2 * V) * sizeof(Sciana)); 
@@ -232,7 +245,6 @@ struktura_scian* demoucron(lista_sasiedztw* graf) {
         sciany[1].wierzcholki[i] = cykl[i]; 
     }
 
-    // GŁÓWNA PĘTLA UKŁADANIA SEGMENTÓW
     while (1) {
         Segment* segmenty = malloc(V * sizeof(Segment));
         int liczba_segmentow = 0;
@@ -251,9 +263,50 @@ struktura_scian* demoucron(lista_sasiedztw* graf) {
             }
         }
         
-        if (liczba_segmentow == 0) { 
-            free(segmenty); free(odwiedzone); 
-            break; 
+        if (liczba_segmentow == 0) {
+            int znaleziona_cieciwa = 0;
+            
+            for (int u = 0; u < V && !znaleziona_cieciwa; u++) {
+                if (narysowane[u] == 1) {
+                    lista_k* sasiad = graf->lista[u];
+                    while (sasiad != NULL) {
+                        int v = sasiad->nr_wierzcholka - 1;
+                        
+                        if (narysowane[v] == 1 && uzyta_krawedz[u][v] == 0) {
+                            
+                            int* sciezka_cieciwy = malloc(2 * sizeof(int));
+                            sciezka_cieciwy[0] = u;
+                            sciezka_cieciwy[1] = v;
+                            
+                            int znaleziona_sciana = -1;
+                            for(int i = 0; i < liczba_scian; i++) {
+                                if(czy_w_scianie(&sciany[i], u) && czy_w_scianie(&sciany[i], v)) {
+                                    znaleziona_sciana = i;
+                                    break;
+                                }
+                            }
+                            
+                            if(znaleziona_sciana != -1) {
+                                krok_d_rozdziel_sciane(sciany, &liczba_scian, znaleziona_sciana, sciezka_cieciwy, 2);
+                                uzyta_krawedz[u][v] = 1;
+                                uzyta_krawedz[v][u] = 1;
+                                znaleziona_cieciwa = 1;
+                            }
+                            free(sciezka_cieciwy);
+                            if (znaleziona_cieciwa) break;
+                        }
+                        sasiad = sasiad->next;
+                    }
+                }
+            }
+            
+            if (znaleziona_cieciwa == 0) { 
+                free(segmenty); free(odwiedzone); 
+                break; 
+            }
+            
+            free(segmenty); free(odwiedzone);
+            continue;
         }
 
         for (int s = 0; s < liczba_segmentow; s++) {
@@ -279,6 +332,8 @@ struktura_scian* demoucron(lista_sasiedztw* graf) {
             free(kolor); free(rodzic); free(cykl); free(narysowane);
             for(int i = 0; i < liczba_scian; i++) free(sciany[i].wierzcholki);
             free(sciany); free(segmenty); free(odwiedzone);
+            for(int i=0; i<V; i++) free(uzyta_krawedz[i]);
+            free(uzyta_krawedz);
             return NULL; 
         }
 
@@ -295,6 +350,14 @@ struktura_scian* demoucron(lista_sasiedztw* graf) {
         if (dfs_sciezka(graf, start_styku, cel_styku, narysowane, odwiedzone_sciezka, sciezka, &dl_sciezki, wybrany)) {
             for(int i=1; i < dl_sciezki-1; i++) narysowane[sciezka[i]] = 1;
             krok_d_rozdziel_sciane(sciany, &liczba_scian, cel_sciana, sciezka, dl_sciezki);
+            
+            for(int i = 0; i < dl_sciezki - 1; i++) {
+                int u = sciezka[i];
+                int v = sciezka[i+1];
+                uzyta_krawedz[u][v] = 1;
+                uzyta_krawedz[v][u] = 1;
+            }
+            
         } else {
             fprintf(stderr, "BLAD: Algorytm utknal, brak trasy przez segment!\n");
             free(sciezka); free(odwiedzone_sciezka);
@@ -322,7 +385,7 @@ struktura_scian* demoucron(lista_sasiedztw* graf) {
         wynik->sciany[i] = malloc(sciany[i].rozmiar * sizeof(int));
         
         for (int j = 0; j < sciany[i].rozmiar; j++) {
-            wynik->sciany[i][j] = sciany[i].wierzcholki[j] + 1; // Powrót do numeracji 1..V
+            wynik->sciany[i][j] = sciany[i].wierzcholki[j] + 1;
         }
 
         if (wynik->len[i] > max_len) {
@@ -332,6 +395,9 @@ struktura_scian* demoucron(lista_sasiedztw* graf) {
     }
     
     wynik->s_zewn = index_zewn;
+
+    for(int i=0; i<V; i++) free(uzyta_krawedz[i]);
+    free(uzyta_krawedz);
 
     free(kolor); free(rodzic); free(cykl); free(narysowane);
     for(int i = 0; i < liczba_scian; i++) free(sciany[i].wierzcholki);

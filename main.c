@@ -90,6 +90,28 @@ int wyp_dane( FILE *f, Lista_W* lv ){
     return 0;
 }
 
+void wypisz_dla_desmosa(Lista_W* lv) {
+    if (lv == NULL) return;
+    
+    fprintf(stdout, "\nDESMOS\n");
+
+    for(int i = 0; i < lv->rozmiar; i++) {
+        fprintf(stdout, "v_{%d}=(%lf, %lf)\n", i+1, lv->lista[i]->poz[0], lv->lista[i]->poz[1]);
+    }
+
+    for(int i = 0; i < lv->rozmiar; i++) {
+        lista_k* temp = lv->lista[i]->krawedzie;
+        while(temp != NULL) {
+            if (i + 1 < temp->nr_wierzcholka) {
+                fprintf(stdout, "\\operatorname{polygon}\\left(v_{%d},v_{%d}\\right)\n", i+1, temp->nr_wierzcholka);
+            }
+            temp = temp->next;
+        }
+    }
+    
+    fprintf(stdout, "\n");
+}
+
 // Main. Plis zostawcie maina jak najbardziej czytelnym
 int main(int argc, char** argv)
 {
@@ -118,6 +140,8 @@ int main(int argc, char** argv)
     }
 
     Lista_W* lv = algo(macierz);
+
+    wypisz_dla_desmosa(lv);
 
     FILE *out = argc > 2 ? fopen(argv[2], "w") : fopen("wyjscie", "w");
 

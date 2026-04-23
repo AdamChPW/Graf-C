@@ -46,7 +46,7 @@ struktura_scian* demoucron(lista_sasiedztw* graf);
 
 void triang( Lista_W* lv, struktura_scian* s );
 
-void fpp_zewn( Lista_W* lv );
+void fpp_zewn( Lista_W* lv, struktura_scian* s );
 
 void tpp_wewn( Lista_W* lv );
 
