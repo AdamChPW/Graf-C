@@ -6,7 +6,7 @@
 #include "wczytaj.h"
 
 #define SKALA 5
-#define MAXITER 100
+#define MAXITER 10000
 #define MAXDEG 16
 #ifndef M_PI
 #define M_PI 3.14159265358979323846 //--pedantic

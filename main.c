@@ -93,24 +93,35 @@ int wyp_dane( FILE *f, Lista_W* lv ){
 void wypisz_dla_desmosa(Lista_W* lv) {
     if (lv == NULL) return;
     
-    fprintf(stdout, "\nDESMOS\n");
-
-    for(int i = 0; i < lv->rozmiar; i++) {
-        fprintf(stdout, "v_{%d}=(%lf, %lf)\n", i+1, lv->lista[i]->poz[0], lv->lista[i]->poz[1]);
+    FILE* plik = fopen("desmos.txt", "w");
+    if (plik == NULL) 
+    {
+        fprintf(stderr, "Blad: Nie udalo sie utworzyc pliku desmos.txt\n");
+        return;
     }
+    for(int i = 0; i < lv->rozmiar; i++) 
+    {
+        fprintf(plik, "v_{%d}=(%lf, %lf)\n", i+1, lv->lista[i]->poz[0], lv->lista[i]->poz[1]);
+    }
+    
+    fprintf(plik, "\n");
 
-    for(int i = 0; i < lv->rozmiar; i++) {
+    for(int i = 0; i < lv->rozmiar; i++) 
+    {
         lista_k* temp = lv->lista[i]->krawedzie;
         while(temp != NULL) {
             if (i + 1 < temp->nr_wierzcholka) {
-                fprintf(stdout, "\\operatorname{polygon}\\left(v_{%d},v_{%d}\\right)\n", i+1, temp->nr_wierzcholka);
+                fprintf(plik, "\\operatorname{polygon}\\left(v_{%d},v_{%d}\\right)\n", i+1, temp->nr_wierzcholka);
             }
             temp = temp->next;
         }
     }
     
-    fprintf(stdout, "\n");
+    fclose(plik);
+    
+    fprintf(stdout, "dane dla Desmosa w desmos.txt.\n");
 }
+
 
 // Main. Plis zostawcie maina jak najbardziej czytelnym
 int main(int argc, char** argv)

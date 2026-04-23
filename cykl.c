@@ -82,7 +82,6 @@ int dfs_sciezka(lista_sasiedztw* graf, int u, int cel_v, int* narysowane, int* o
     sciezka[(*dlugosc)++] = u;
 
     if (u == cel_v && (*dlugosc) > 1) {
-        odwiedzone[u] = 0;
         return 1;
     }
 
@@ -105,7 +104,7 @@ int dfs_sciezka(lista_sasiedztw* graf, int u, int cel_v, int* narysowane, int* o
     }
 
     (*dlugosc)--;
-    odwiedzone[u] = 0;
+
     return 0;
 }
 
@@ -245,11 +244,14 @@ struktura_scian* demoucron(lista_sasiedztw* graf) {
         sciany[1].wierzcholki[i] = cykl[i]; 
     }
 
+// GŁÓWNA PĘTLA UKŁADANIA SEGMENTÓW
     while (1) {
-        Segment* segmenty = malloc(V * sizeof(Segment));
+        // Alokujemy 4*V, żeby pomieścić i normalne segmenty, i wszystkie cięciwy
+        Segment* segmenty = malloc(4 * V * sizeof(Segment));
         int liczba_segmentow = 0;
         int* odwiedzone = calloc(V, sizeof(int));
 
+        // 1. Szukanie standardowych segmentów (z nienarysowanymi wierzchołkami)
         for (int i = 0; i < V; i++) {
             if (narysowane[i] == 0 && odwiedzone[i] == 0) {
                 segmenty[liczba_segmentow].wierzcholki = malloc(V * sizeof(int));
@@ -263,52 +265,36 @@ struktura_scian* demoucron(lista_sasiedztw* graf) {
             }
         }
         
-        if (liczba_segmentow == 0) {
-            int znaleziona_cieciwa = 0;
-            
-            for (int u = 0; u < V && !znaleziona_cieciwa; u++) {
-                if (narysowane[u] == 1) {
-                    lista_k* sasiad = graf->lista[u];
-                    while (sasiad != NULL) {
-                        int v = sasiad->nr_wierzcholka - 1;
+        // 2. NOWE: Cięciwy (pojedyncze nienarysowane krawędzie) jako pełnoprawne segmenty!
+        for (int u = 0; u < V; u++) {
+            if (narysowane[u] == 1) {
+                lista_k* sasiad = graf->lista[u];
+                while(sasiad != NULL) {
+                    int v = sasiad->nr_wierzcholka - 1;
+                    // u < v zapobiega dodaniu tej samej krawędzi dwa razy
+                    if (narysowane[v] == 1 && uzyta_krawedz[u][v] == 0 && u < v) {
+                        segmenty[liczba_segmentow].wierzcholki = malloc(1 * sizeof(int));
+                        segmenty[liczba_segmentow].punkty_styku = malloc(2 * sizeof(int));
+                        segmenty[liczba_segmentow].pasujace_sciany = malloc((liczba_scian + 1) * sizeof(int));
+                        segmenty[liczba_segmentow].ile_wierzcholkow = 0; // Brak wewn. wierzchołków
                         
-                        if (narysowane[v] == 1 && uzyta_krawedz[u][v] == 0) {
-                            
-                            int* sciezka_cieciwy = malloc(2 * sizeof(int));
-                            sciezka_cieciwy[0] = u;
-                            sciezka_cieciwy[1] = v;
-                            
-                            int znaleziona_sciana = -1;
-                            for(int i = 0; i < liczba_scian; i++) {
-                                if(czy_w_scianie(&sciany[i], u) && czy_w_scianie(&sciany[i], v)) {
-                                    znaleziona_sciana = i;
-                                    break;
-                                }
-                            }
-                            
-                            if(znaleziona_sciana != -1) {
-                                krok_d_rozdziel_sciane(sciany, &liczba_scian, znaleziona_sciana, sciezka_cieciwy, 2);
-                                uzyta_krawedz[u][v] = 1;
-                                uzyta_krawedz[v][u] = 1;
-                                znaleziona_cieciwa = 1;
-                            }
-                            free(sciezka_cieciwy);
-                            if (znaleziona_cieciwa) break;
-                        }
-                        sasiad = sasiad->next;
+                        segmenty[liczba_segmentow].punkty_styku[0] = u;
+                        segmenty[liczba_segmentow].punkty_styku[1] = v;
+                        segmenty[liczba_segmentow].ile_styku = 2;
+                        segmenty[liczba_segmentow].ile_pasuje = 0;
+                        liczba_segmentow++;
                     }
+                    sasiad = sasiad->next;
                 }
             }
-            
-            if (znaleziona_cieciwa == 0) { 
-                free(segmenty); free(odwiedzone); 
-                break; 
-            }
-            
-            free(segmenty); free(odwiedzone);
-            continue;
         }
 
+        if (liczba_segmentow == 0) { 
+            free(segmenty); free(odwiedzone); 
+            break; 
+        }
+
+        // Dopasowywanie segmentów do ścian
         for (int s = 0; s < liczba_segmentow; s++) {
             for (int i = 0; i < liczba_scian; i++) {
                 int pasuje = 1;
@@ -319,6 +305,7 @@ struktura_scian* demoucron(lista_sasiedztw* graf) {
             }
         }
 
+        // Szukanie segmentu z najmniejszą ilością pasujących ścian
         int min_pasuje = INT_MAX, wybrany_idx = -1;
         for (int i = 0; i < liczba_segmentow; i++) {
             if (segmenty[i].ile_pasuje < min_pasuje) { 
@@ -331,7 +318,13 @@ struktura_scian* demoucron(lista_sasiedztw* graf) {
             fprintf(stderr, "BLAD: Graf nie jest planarny!\n"); 
             free(kolor); free(rodzic); free(cykl); free(narysowane);
             for(int i = 0; i < liczba_scian; i++) free(sciany[i].wierzcholki);
-            free(sciany); free(segmenty); free(odwiedzone);
+            free(sciany); 
+            for(int i=0; i<liczba_segmentow; i++) {
+                free(segmenty[i].wierzcholki); 
+                free(segmenty[i].punkty_styku); 
+                free(segmenty[i].pasujace_sciany);
+            }
+            free(segmenty); free(odwiedzone);
             for(int i=0; i<V; i++) free(uzyta_krawedz[i]);
             free(uzyta_krawedz);
             return NULL; 
@@ -342,34 +335,47 @@ struktura_scian* demoucron(lista_sasiedztw* graf) {
 
         int* sciezka = malloc(V * sizeof(int));
         int dl_sciezki = 0;
-        int* odwiedzone_sciezka = calloc(V, sizeof(int));
         
-        int start_styku = wybrany->punkty_styku[0];
-        int cel_styku = (wybrany->ile_styku > 1) ? wybrany->punkty_styku[1] : wybrany->punkty_styku[0]; 
-        
-        if (dfs_sciezka(graf, start_styku, cel_styku, narysowane, odwiedzone_sciezka, sciezka, &dl_sciezki, wybrany)) {
-            for(int i=1; i < dl_sciezki-1; i++) narysowane[sciezka[i]] = 1;
+        // NOWE: Obsługa rysowania - rozdzielamy zachowanie na cięciwy i standardowe segmenty
+        if (wybrany->ile_wierzcholkow == 0) {
+            // Rysowanie samej cięciwy (omijamy dfs)
+            sciezka[0] = wybrany->punkty_styku[0];
+            sciezka[1] = wybrany->punkty_styku[1];
+            dl_sciezki = 2;
             krok_d_rozdziel_sciane(sciany, &liczba_scian, cel_sciana, sciezka, dl_sciezki);
-            
-            for(int i = 0; i < dl_sciezki - 1; i++) {
-                int u = sciezka[i];
-                int v = sciezka[i+1];
-                uzyta_krawedz[u][v] = 1;
-                uzyta_krawedz[v][u] = 1;
-            }
-            
+            uzyta_krawedz[sciezka[0]][sciezka[1]] = 1;
+            uzyta_krawedz[sciezka[1]][sciezka[0]] = 1;
         } else {
-            fprintf(stderr, "BLAD: Algorytm utknal, brak trasy przez segment!\n");
-            free(sciezka); free(odwiedzone_sciezka);
-            break; 
+            // Standardowe rysowanie
+            int* odwiedzone_sciezka = calloc(V, sizeof(int));
+            int start_styku = wybrany->punkty_styku[0];
+            int cel_styku = (wybrany->ile_styku > 1) ? wybrany->punkty_styku[1] : wybrany->punkty_styku[0]; 
+            
+            if (dfs_sciezka(graf, start_styku, cel_styku, narysowane, odwiedzone_sciezka, sciezka, &dl_sciezki, wybrany)) {
+                for(int i=1; i < dl_sciezki-1; i++) narysowane[sciezka[i]] = 1;
+                krok_d_rozdziel_sciane(sciany, &liczba_scian, cel_sciana, sciezka, dl_sciezki);
+                
+                for(int i = 0; i < dl_sciezki - 1; i++) {
+                    int u = sciezka[i];
+                    int v = sciezka[i+1];
+                    uzyta_krawedz[u][v] = 1;
+                    uzyta_krawedz[v][u] = 1;
+                }
+            } else {
+                fprintf(stderr, "BLAD: Algorytm utknal, brak trasy przez segment!\n");
+                free(sciezka); free(odwiedzone_sciezka);
+                break; 
+            }
+            free(odwiedzone_sciezka);
         }
 
+        // Czyszczenie pamięci po kroku
         for(int i=0; i<liczba_segmentow; i++) {
             free(segmenty[i].wierzcholki); 
             free(segmenty[i].punkty_styku); 
             free(segmenty[i].pasujace_sciany);
         }
-        free(segmenty); free(odwiedzone); free(sciezka); free(odwiedzone_sciezka);
+        free(segmenty); free(odwiedzone); free(sciezka);
     }
 
     struktura_scian* wynik = malloc(sizeof(struktura_scian));
