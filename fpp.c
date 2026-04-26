@@ -9,7 +9,8 @@ Lista_W* algo( lista_sasiedztw* m )
     if( s == NULL)
     {
         fprintf(stderr, "Graf nie planarny lub bez cykli\n");
-        return lv;
+        free_lv(lv);
+        return NULL;
     }
 
     int zewn_idx = s->s_zewn;
@@ -20,9 +21,9 @@ Lista_W* algo( lista_sasiedztw* m )
         lv->lista[wierzcholek - 1]->czy_zewn = 1;
     }
 
-    wypisz_system_rotacyjny(s, m->rozmiar);
+    //wypisz_system_rotacyjny(s, m->rozmiar);
     
-    /*=============================================================*/
+    /*=============================================================
     // Testy integracji demoucron-triangulacja
     fprintf(stderr, "\nTest\n");
 
@@ -39,7 +40,7 @@ Lista_W* algo( lista_sasiedztw* m )
     fprintf(stderr, "Index Sciany glownej: %d\n",s->s_zewn);
 
     fprintf(stderr, "Przeszlo\n\n");
-    /*=============================================================*/
+    =============================================================*/
 
     triang( lv, s );
 
@@ -48,7 +49,7 @@ Lista_W* algo( lista_sasiedztw* m )
     for(int i = 0; i < MAXITER; i++)
         tpp_wewn( lv );
 
-    free_struktura_scian(s);  
+    free_struktura_scian(s); 
     return lv;
 }
 
@@ -141,7 +142,9 @@ void triang( Lista_W* lv, struktura_scian* s )
             add_sk(lv, target, previous, pivot);
         }
     }
-
+    
+    // Test
+    /*
     fprintf(stdout, "Po triangualizacji: \n");
     for(int i = 0; i < lv->rozmiar; i++)
     {
@@ -154,6 +157,7 @@ void triang( Lista_W* lv, struktura_scian* s )
         }
         fprintf(stdout, "]\n");
     }
+    */
 }
 
 void fpp_zewn( Lista_W* lv, struktura_scian* s ) 
@@ -205,4 +209,15 @@ void tpp_wewn( Lista_W* lv )
             lv->lista[i]->poz[1] = suma_y / suma_odw_wag;
         }
     }
+}
+
+//Przed nim powininen byc free_m, bo oba free korzystaja z tablicy lista_k
+void free_lv(Lista_W* lv)
+{
+    for(int i = 0; i < lv->rozmiar; i++)
+    {
+        free(lv->lista[i]);
+    } 
+    free(lv->lista);
+    free(lv);
 }

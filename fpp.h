@@ -6,7 +6,7 @@
 #include "wczytaj.h"
 
 #define SKALA 5
-#define MAXITER 10000
+#define MAXITER 1000
 #define MAXDEG 16
 #ifndef M_PI
 #define M_PI 3.14159265358979323846 //--pedantic
@@ -47,6 +47,8 @@ void triang( Lista_W* lv, struktura_scian* s );
 void fpp_zewn( Lista_W* lv, struktura_scian* s );
 
 void tpp_wewn( Lista_W* lv );
+
+void free_lv( Lista_W* lv );
 
 void free_struktura_scian(struktura_scian* s);
 

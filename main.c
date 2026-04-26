@@ -142,7 +142,7 @@ int main(int argc, char** argv)
         fprintf(stderr, "Nie udalo sie utworzyc macierzy.\n");
         return 2;
     }
-    test(macierz);
+    //test(macierz);
 
     if( spr_macierz(macierz) != 0 ){
         fprintf(stderr, "Macierz nie jest odpowiednia do algorytmu.\n");
@@ -152,6 +152,13 @@ int main(int argc, char** argv)
 
     Lista_W* lv = algo(macierz);
 
+    if(lv == NULL)
+    {
+        fprintf(stderr, "Konczenie dzialanie programu\n");
+        free_m(macierz);
+        return 4;
+    }
+
     wypisz_dla_desmosa(lv);
 
     FILE *out = argc > 2 ? fopen(argv[2], "w") : fopen("wyjscie", "w");
@@ -160,10 +167,14 @@ int main(int argc, char** argv)
         fprintf(stdout, "Wypisano odpowiedz do pliku.\n");
     else {
         fprintf(stderr, "Nie udalo sie zapisac odpowidzi\n");
-        return 4;
+        free_m(macierz);
+        free_lv(lv);
+        fclose(out);
+        return 5;
     }
 
     free_m(macierz);
+    free_lv(lv);
     fclose(out);
     return 0;
 }
