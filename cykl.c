@@ -244,14 +244,12 @@ struktura_scian* demoucron(lista_sasiedztw* graf) {
         sciany[1].wierzcholki[i] = cykl[i]; 
     }
 
-// GŁÓWNA PĘTLA UKŁADANIA SEGMENTÓW
+
     while (1) {
-        // Alokujemy 4*V, żeby pomieścić i normalne segmenty, i wszystkie cięciwy
         Segment* segmenty = malloc(4 * V * sizeof(Segment));
         int liczba_segmentow = 0;
         int* odwiedzone = calloc(V, sizeof(int));
 
-        // 1. Szukanie standardowych segmentów (z nienarysowanymi wierzchołkami)
         for (int i = 0; i < V; i++) {
             if (narysowane[i] == 0 && odwiedzone[i] == 0) {
                 segmenty[liczba_segmentow].wierzcholki = malloc(V * sizeof(int));
@@ -265,7 +263,6 @@ struktura_scian* demoucron(lista_sasiedztw* graf) {
             }
         }
         
-        // 2. NOWE: Cięciwy (pojedyncze nienarysowane krawędzie) jako pełnoprawne segmenty!
         for (int u = 0; u < V; u++) {
             if (narysowane[u] == 1) {
                 lista_k* sasiad = graf->lista[u];
@@ -336,7 +333,7 @@ struktura_scian* demoucron(lista_sasiedztw* graf) {
         int* sciezka = malloc(V * sizeof(int));
         int dl_sciezki = 0;
         
-        // NOWE: Obsługa rysowania - rozdzielamy zachowanie na cięciwy i standardowe segmenty
+
         if (wybrany->ile_wierzcholkow == 0) {
             // Rysowanie samej cięciwy (omijamy dfs)
             sciezka[0] = wybrany->punkty_styku[0];
@@ -369,7 +366,7 @@ struktura_scian* demoucron(lista_sasiedztw* graf) {
             free(odwiedzone_sciezka);
         }
 
-        // Czyszczenie pamięci po kroku
+
         for(int i=0; i<liczba_segmentow; i++) {
             free(segmenty[i].wierzcholki); 
             free(segmenty[i].punkty_styku); 

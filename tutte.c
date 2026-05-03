@@ -21,33 +21,12 @@ Lista_W* algo( lista_sasiedztw* m )
         lv->lista[wierzcholek - 1]->czy_zewn = 1;
     }
 
-    //wypisz_system_rotacyjny(s, m->rozmiar);
-    
-    /*=============================================================
-    // Testy integracji demoucron-triangulacja
-    fprintf(stderr, "\nTest\n");
-
-    fprintf(stderr, "Znalezione sciany:\n");
-    for(int i = 0; i<s->rozmiar; i++){
-        fprintf(stderr, "%d: [ ",i);
-
-        for(int l = 0; l < s->len[i]; l++){
-            fprintf(stderr, "%d ",s->sciany[i][l]);
-        }
-
-        fprintf(stderr, "]\n");
-    }
-    fprintf(stderr, "Index Sciany glownej: %d\n",s->s_zewn);
-
-    fprintf(stderr, "Przeszlo\n\n");
-    =============================================================*/
-
     triang( lv, s );
 
-    fpp_zewn( lv, s );
+    tutte_zewn( lv, s );
 
     for(int i = 0; i < MAXITER; i++)
-        tpp_wewn( lv );
+        tutte_wewn( lv );
 
     free_struktura_scian(s); 
     return lv;
@@ -94,11 +73,9 @@ void add_sk(Lista_W* lv, int from, int after, int to)
         if(temp->nr_wierzcholka == after)
         {
             if(temp->next != NULL && temp->next->nr_wierzcholka == to){
-                //fprintf(stderr, "Istnieje juz krawedz od v%d do v%d\n", from, to);
                 break;
             }
 
-            //fprintf(stdout, "Dodano szt. krawedz (v%d, v%d)\n", from, to);
             new->next = temp->next;
             temp->next = new;
             break;
@@ -127,9 +104,6 @@ void triang( Lista_W* lv, struktura_scian* s )
         if(s->s_zewn == i)
             continue;
 
-        // Dziala tylko dla scian z wiecej niz 3 wierzcholki
-        // Dodaje szt. krawedzie od 3 do ostatniego punktu w scianie np. [1, 5, (6), 2] 
-        // Nie wiem czy to problem jak w liscie wystepujo ogony np. [(2,3,2),4,5,6] zamiast [2,4,5,6]
         for(int kr = 2; kr < s->len[i]-1; kr++)     
         {
             pivot = s->sciany[i][0];
@@ -143,24 +117,9 @@ void triang( Lista_W* lv, struktura_scian* s )
         }
     }
     
-    // Test
-    /*
-    fprintf(stdout, "Po triangualizacji: \n");
-    for(int i = 0; i < lv->rozmiar; i++)
-    {
-        fprintf(stdout, "v%d [ ", i+1);
-        lista_k* temp = lv->lista[i]->krawedzie;
-        while(temp != NULL)
-        {
-            fprintf(stdout, "%d ", temp->nr_wierzcholka);
-            temp = temp->next;
-        }
-        fprintf(stdout, "]\n");
-    }
-    */
 }
 
-void fpp_zewn( Lista_W* lv, struktura_scian* s ) 
+void tutte_zewn( Lista_W* lv, struktura_scian* s ) 
 {
     int zewn_idx = s->s_zewn;
     int dlugosc = s->len[zewn_idx];
@@ -174,7 +133,7 @@ void fpp_zewn( Lista_W* lv, struktura_scian* s )
     }
 }
 
-void tpp_wewn( Lista_W* lv )
+void tutte_wewn( Lista_W* lv )
 {
     double obecna_waga;
     double poprzednia_waga = 0;
@@ -211,7 +170,6 @@ void tpp_wewn( Lista_W* lv )
     }
 }
 
-//Przed nim powininen byc free_m, bo oba free korzystaja z tablicy lista_k
 void free_lv(Lista_W* lv)
 {
     for(int i = 0; i < lv->rozmiar; i++)
