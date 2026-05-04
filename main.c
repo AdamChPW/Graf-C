@@ -1,140 +1,127 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
+#include <string.h> // Potrzebne do strcmp
 
-#define BUFSIZE 1024
+#include "wczytaj.h"
+#include "tutte.h"
 
-typedef struct l{
-    char* nazwa;    //Dodalem
-    double wartosc;
-    int nr_wierzcholka;
-    struct l* next; // Kompilator errora walil gdy byl alias*
-}lista_k;
 
-typedef struct m{
-    int rozmiar;
-    lista_k** lista;    //Zmienilem z lista* na lista**. Jak jest ktos modzejszy to niech to zmieni by dzialo z lista_k*
-}lista_sasiedztw;
-
-// Wczytuje dane do tej smiesznej macierzy / listy sasiedztw
-// Ja to zrobie (Adam)
-int add_k(lista_sasiedztw* m, int from, int to, char* nazwa, double waga)
-{
-    lista_k *k = malloc(sizeof(lista_k));
-    if( k == NULL )
-        return 1;
-    
-    k->nr_wierzcholka = to;
-    k->wartosc = waga;
-    k->nazwa = malloc(strlen(nazwa) + 1);
-    if(k->nazwa == NULL) {
-        free(k);
-        return 1;
-    }
-    if( strcpy(k->nazwa, nazwa) == NULL ) {
-        free(k->nazwa);
-        free(k);
-        return 1;
-    }
-    k->next = NULL;
-
-    lista_k* temp = m->lista[from-1];
-    while(temp != NULL)
-    {
-        if(temp->nr_wierzcholka == to){
-            fprintf(stderr, "Istmieje juz droga z v%d do v%d", from, to);
-            free(temp);
-            free(k->nazwa);
-            free(k);
-            return 1;
+void test(lista_sasiedztw* m){
+    for(int i = 0; i < m->rozmiar; i++){
+        printf("v%d[ ", i+1);
+        lista_k* temp  = m->lista[i];
+        while(temp){
+            printf("%d ",temp->nr_wierzcholka);
+            temp = temp->next;
         }
-        temp = temp->next;
+        printf("]\n");
     }
-
-    k->next = m->lista[from-1];
-    m->lista[from-1] = k;
-
-    return 0;
 }
 
-lista_sasiedztw* w_dane(char* f_name)
-{
-    FILE* in = fopen(f_name, "r");
-    if(in == NULL)
-        return NULL;
 
-    lista_sasiedztw* m = malloc(sizeof(lista_sasiedztw));
-    if(m == NULL){
-        fclose(in);
-        return NULL;
-    }
-    m->rozmiar = 0;
+// Sprawdza poprawnosc macierzy pod algorytm
+// Zwraca 0 jak macierz jest git, inna liczba to blad
+int spr_macierz(lista_sasiedztw* l){
+    if (l == NULL || l->rozmiar == 0) return 1;
 
-    char buffer[BUFSIZE];
-    while(fgets(buffer, BUFSIZE, in) != NULL){
+    int V = l->rozmiar;
+    int E = 0;
 
-        char nazwa[BUFSIZE];
-        int v1, v2;
-        double waga;
-
-        sscanf(buffer, "%s %d %d %lf", nazwa, &v1, &v2, &waga);
-
-        if(v1 < 1 || v2 < 1){
-            fprintf(stderr, "Nr_Wierzcholka nie moze byc mniejszy od 1\n"); 
-            // free_m(m);
-            fclose(in);
-            return NULL;
-        }
-        if(waga < 0){
-            fprintf(stderr, "Waga nie moze byc ujemna\n");
-            // free_m(m);
-            fclose(in);
-            return NULL;
-        }
-
-        int new_size =  v1 < v2 && m->rozmiar < v2 ? v2 :
-                        m->rozmiar < v1 ? v1 : m->rozmiar;
-        if(new_size != m->rozmiar){    
-            m->lista = realloc(m->lista, new_size * sizeof(lista_k*));
-            if(m->lista == NULL) {
-                // free_m(m);
-                fclose(in);
-                return NULL;
+    // Liczenie krawędzi
+    for (int i = 0; i < V; i++) {
+        lista_k* temp = l->lista[i];
+        while (temp) {
+            if (i < temp->nr_wierzcholka - 1) { 
+                E++;
             }
-            m->rozmiar = new_size;
-        }
-        
-        if(add_k( m, v1, v2, nazwa, waga) || add_k( m, v2, v1, nazwa, waga)){
-            fprintf(stderr, "Wystapil blad przy dodawaniu krawedzi.\n");
-            // free_m(m);
-            fclose(in);
-            return NULL;
+            temp = temp->next;
         }
     }
 
-    fclose(in);
-    return m;
-}
+    // Sprawdzenie warunku Eulera dla V >= 3)
+    if (V >= 3 && E > 3 * V - 6) {
+        fprintf(stderr, "Blad: Graf ma za duzo krawedzi, byc moze nie jest planarny!\n");
+        return 2; 
+    }
 
-// Sprawdza poprawnosc macierzy pod algorym
-// Zwraca 0 jak macierz jest git
-int spr_macierz(lista_sasiedztw *l){
-    return -1;
+    // Sprawdzanie unikalnosci nazw krawędzi
+    char** sprawdzone_nazwy = malloc(E * sizeof(char*));
+    if (sprawdzone_nazwy == NULL) {
+        fprintf(stderr, "Blad alokacji pamieci przy sprawdzaniu macierzy.\n");
+        return -1; 
+    }
+    
+    int licznik_nazw = 0;
+
+    for (int i = 0; i < V; i++) {
+        lista_k* temp = l->lista[i];
+        while (temp) {
+            if (i < temp->nr_wierzcholka - 1) {
+                for (int j = 0; j < licznik_nazw; j++) {
+                    if (strcmp(sprawdzone_nazwy[j], temp->nazwa) == 0) {
+                        fprintf(stderr, "Blad: Nazwa krawedzi '%s' nie jest unikalna!\n", temp->nazwa);
+                        free(sprawdzone_nazwy);
+                        return 3;
+                    }
+                }
+                
+                sprawdzone_nazwy[licznik_nazw] = temp->nazwa;
+                licznik_nazw++;
+            }
+            temp = temp->next;
+        }
+    }
+
+    free(sprawdzone_nazwy);
+    return 0;
 }
 
 // Wypisuje dane do pliku f
 // Zwraca 0 jak jest git (brakuje mi bool'a)
-int wyp_dane( FILE *f, lista_sasiedztw *l){
-    if (f == NULL || l == NULL) {
+int wyp_dane( FILE *f, Lista_W* lv ){
+    if (f == NULL || lv == NULL) {
         return 1; 
     }
 
-    for (int i = 0; i < l->rozmiar; i++) {
-        fprintf(f, "%d 0.0 0.0\n", i + 1);
+    for (int i = 0; i < lv->rozmiar; i++) {
+        fprintf(f, "%d %lf %lf\n", i+1, lv->lista[i]->poz[0], lv->lista[i]->poz[1]);
     }
 
     return 0;
 }
+
+void wypisz_dla_desmosa(Lista_W* lv) {
+    if (lv == NULL) return;
+    
+    FILE* plik = fopen("desmos.txt", "w");
+    if (plik == NULL) 
+    {
+        fprintf(stderr, "Blad: Nie udalo sie utworzyc pliku desmos.txt\n");
+        return;
+    }
+    for(int i = 0; i < lv->rozmiar; i++) 
+    {
+        fprintf(plik, "v_{%d}=(%lf, %lf)\n", i+1, lv->lista[i]->poz[0], lv->lista[i]->poz[1]);
+    }
+    
+    fprintf(plik, "\n");
+
+    for(int i = 0; i < lv->rozmiar; i++) 
+    {
+        lista_k* temp = lv->lista[i]->krawedzie;
+        while(temp != NULL) {
+            if (i + 1 < temp->nr_wierzcholka) {
+                fprintf(plik, "\\operatorname{polygon}\\left(v_{%d},v_{%d}\\right)\n", i+1, temp->nr_wierzcholka);
+            }
+            temp = temp->next;
+        }
+    }
+    
+    fclose(plik);
+    
+    fprintf(stdout, "dane dla Desmosa w desmos.txt.\n");
+}
+
 
 // Main. Plis zostawcie maina jak najbardziej czytelnym
 int main(int argc, char** argv)
@@ -143,32 +130,51 @@ int main(int argc, char** argv)
         fprintf(stderr, "Nie podano wejscie.\n");
         return 1;
     }
+    
+    char *ext = strrchr(argv[1], '.');
+    if (ext == NULL || (strcmp(ext, ".txt") != 0 && strcmp(ext, ".csv") != 0)) {
+        fprintf(stderr, "Nieobslugiwany format pliku.\n");
+        return 1;
+    }
 
     lista_sasiedztw* macierz = w_dane(argv[1]);
     if( macierz == NULL ){
         fprintf(stderr, "Nie udalo sie utworzyc macierzy.\n");
         return 2;
     }
+    //test(macierz);
 
     if( spr_macierz(macierz) != 0 ){
         fprintf(stderr, "Macierz nie jest odpowiednia do algorytmu.\n");
-        // free_m(m);
+        free_m(macierz);
         return 3;
     }
 
-    //algo(macierz); Nie robimy
+    Lista_W* lv = algo(macierz);
 
-    FILE *out = argc > 2 ? fopen(argv[2], "w") : fopen("wyjscie", "w");
-
-    if( wyp_dane( out, macierz ) == 0 )
-        fprintf(stdout, "Wypisano odpowiedz do pliku.\n");
-    else {
-        fprintf(stderr, "Nie udalo sie zapisac odpowidzi");
+    if(lv == NULL)
+    {
+        fprintf(stderr, "Konczenie dzialanie programu\n");
+        free_m(macierz);
         return 4;
     }
 
-    // free_m(m);
+    wypisz_dla_desmosa(lv);
+
+    FILE *out = argc > 2 ? fopen(argv[2], "w") : fopen("wyjscie", "w");
+
+    if( wyp_dane( out, lv ) == 0 )
+        fprintf(stdout, "Wypisano odpowiedz do pliku.\n");
+    else {
+        fprintf(stderr, "Nie udalo sie zapisac odpowidzi\n");
+        free_m(macierz);
+        free_lv(lv);
+        fclose(out);
+        return 5;
+    }
+
+    free_m(macierz);
+    free_lv(lv);
     fclose(out);
     return 0;
 }
-// Jak sie komus chce to moze to rozlorzyc na kilka pliki.
