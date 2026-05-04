@@ -415,15 +415,17 @@ struktura_scian* demoucron(lista_sasiedztw* graf) {
     
     wynik->s_zewn = index_zewn;
 
-    for(int i=0; i<V; i++) free(uzyta_krawedz[i]);
-        free(uzyta_krawedz);
+    for(int i=0; i<V; i++) 
+        free(uzyta_krawedz[i]);
+    free(uzyta_krawedz);
 
     free(kolor); 
     free(rodzic); 
     free(cykl); 
     free(narysowane);
-    for(int i = 0; i < liczba_scian; i++) free(sciany[i].wierzcholki);
-        free(sciany);
+    for(int i = 0; i < liczba_scian; i++) 
+        free(sciany[i].wierzcholki);
+    free(sciany);
 
     return wynik;
 }
