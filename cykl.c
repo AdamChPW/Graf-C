@@ -207,21 +207,26 @@ struktura_scian* demoucron(lista_sasiedztw* graf) {
     koniec_cyklu = -1;
     
     for (int i = 0; i < V; i++) {
-        if (kolor[i] == 0 && start_cyklu == -1) dfs_szukaj_cyklu(graf, i, -1, kolor, rodzic);
+        if (kolor[i] == 0 && start_cyklu == -1) 
+            dfs_szukaj_cyklu(graf, i, -1, kolor, rodzic);
     }
 
     if (start_cyklu == -1) { 
         fprintf(stderr, "BLAD: Brak cykli w grafie (drzewo/las).\n"); 
-        free(kolor); free(rodzic); free(narysowane);
+        free(kolor); 
+        free(rodzic); 
+        free(narysowane);
         for(int i=0; i<V; i++) free(uzyta_krawedz[i]);
-        free(uzyta_krawedz);
+            free(uzyta_krawedz);
         return NULL; 
     }
 
     int* cykl = malloc(V * sizeof(int));
     int dl_cyklu = 0;
     int curr = koniec_cyklu;
-    while (curr != start_cyklu) { cykl[dl_cyklu++] = curr; curr = rodzic[curr]; }
+    while (curr != start_cyklu) { 
+        cykl[dl_cyklu++] = curr; curr = rodzic[curr]; 
+    }
     cykl[dl_cyklu++] = start_cyklu;
 
     for (int i = 0; i < dl_cyklu; i++) {
@@ -287,7 +292,8 @@ struktura_scian* demoucron(lista_sasiedztw* graf) {
         }
 
         if (liczba_segmentow == 0) { 
-            free(segmenty); free(odwiedzone); 
+            free(segmenty); 
+            free(odwiedzone); 
             break; 
         }
 
@@ -296,9 +302,13 @@ struktura_scian* demoucron(lista_sasiedztw* graf) {
             for (int i = 0; i < liczba_scian; i++) {
                 int pasuje = 1;
                 for (int k = 0; k < segmenty[s].ile_styku; k++) {
-                    if (!czy_w_scianie(&sciany[i], segmenty[s].punkty_styku[k])) { pasuje = 0; break; }
+                    if (!czy_w_scianie(&sciany[i], segmenty[s].punkty_styku[k]))  {
+                        pasuje = 0; 
+                        break;
+                    } 
                 }
-                if (pasuje) segmenty[s].pasujace_sciany[segmenty[s].ile_pasuje++] = i;
+                if (pasuje) 
+                    segmenty[s].pasujace_sciany[segmenty[s].ile_pasuje++] = i;
             }
         }
 
@@ -313,7 +323,10 @@ struktura_scian* demoucron(lista_sasiedztw* graf) {
 
         if (min_pasuje == 0) { 
             fprintf(stderr, "BLAD: Graf nie jest planarny!\n"); 
-            free(kolor); free(rodzic); free(cykl); free(narysowane);
+            free(kolor); 
+            free(rodzic); 
+            free(cykl); 
+            free(narysowane);
             for(int i = 0; i < liczba_scian; i++) free(sciany[i].wierzcholki);
             free(sciany); 
             for(int i=0; i<liczba_segmentow; i++) {
@@ -321,8 +334,10 @@ struktura_scian* demoucron(lista_sasiedztw* graf) {
                 free(segmenty[i].punkty_styku); 
                 free(segmenty[i].pasujace_sciany);
             }
-            free(segmenty); free(odwiedzone);
-            for(int i=0; i<V; i++) free(uzyta_krawedz[i]);
+            free(segmenty); 
+            free(odwiedzone);
+            for(int i=0; i<V; i++) 
+                free(uzyta_krawedz[i]);
             free(uzyta_krawedz);
             return NULL; 
         }
@@ -360,7 +375,8 @@ struktura_scian* demoucron(lista_sasiedztw* graf) {
                 }
             } else {
                 fprintf(stderr, "BLAD: Algorytm utknal, brak trasy przez segment!\n");
-                free(sciezka); free(odwiedzone_sciezka);
+                free(sciezka); 
+                free(odwiedzone_sciezka);
                 break; 
             }
             free(odwiedzone_sciezka);
@@ -400,11 +416,14 @@ struktura_scian* demoucron(lista_sasiedztw* graf) {
     wynik->s_zewn = index_zewn;
 
     for(int i=0; i<V; i++) free(uzyta_krawedz[i]);
-    free(uzyta_krawedz);
+        free(uzyta_krawedz);
 
-    free(kolor); free(rodzic); free(cykl); free(narysowane);
+    free(kolor); 
+    free(rodzic); 
+    free(cykl); 
+    free(narysowane);
     for(int i = 0; i < liczba_scian; i++) free(sciany[i].wierzcholki);
-    free(sciany);
+        free(sciany);
 
     return wynik;
 }
