@@ -6,11 +6,10 @@
 Lista_W* algo(lista_sasiedztw* m) {
     Lista_W* lv = lv_init(m);
 
-    // Odpalamy naszą nową koparkę pętli
     cycle* rama = get_guaranteed_frame(m);
 
     if (rama == NULL) {
-        fprintf(stderr, "Blad: Nie znaleziono poprawnej ramy w grafie (moze nie byc 3-spojny)!\n");
+        fprintf(stderr, "Blad: Nie znaleziono poprawnej ramy w grafie\n");
         free_lv(lv);
         return NULL;
     }
@@ -30,7 +29,6 @@ Lista_W* algo(lista_sasiedztw* m) {
         tutte_wewn(lv);
     }
 
-    // Sprzątanie po ramie
     free(rama->wierzcholki);
     free(rama);
 
@@ -51,13 +49,13 @@ void dfs_szukaj_ramy(lista_sasiedztw *list, int u, int start, int *odwiedzone, i
         int v = find_id_in_list(list, edge->nr_wierzcholka_cel);
         if (v != -1) {
             if (v == start && dlugosc >= 3) {
-                // Znaleźliśmy pętlę! Pakujemy ją w strukturę.
+                
                 cycle *kandydat = calloc(1, sizeof(cycle));
                 kandydat->rozmiar = dlugosc;
                 kandydat->wierzcholki = calloc(dlugosc, sizeof(int));
                 for (int i = 0; i < dlugosc; i++) kandydat->wierzcholki[i] = sciezka[i];
 
-                // Od razu zlecamy docięcie cięciw
+                // docinanie (pozbycie się cięciw)
                 cycle *dociety = kandydat;
                 while (1) {
                     cycle *nowy = split_if_shortcut(list, dociety);
@@ -65,17 +63,18 @@ void dfs_szukaj_ramy(lista_sasiedztw *list, int u, int start, int *odwiedzone, i
                     dociety = nowy;
                 }
 
-                // Sprawdzamy, czy ta konkretna rama jest tą jedyną "dobrą"
+                
                 if (is_connected_without_cycle(list, dociety)) {
                     *znaleziona_rama = dociety; 
                     odwiedzone[u] = 0;
                     return;
-                } else {
-                    // Pudło, zwalniamy pamięć i szukamy innej pętli
+                } 
+                else {
                     free(dociety->wierzcholki);
                     free(dociety);
                 }
-            } else if (!odwiedzone[v]) {
+            } 
+            else if (!odwiedzone[v]) {
                 dfs_szukaj_ramy(list, v, start, odwiedzone, sciezka, dlugosc, znaleziona_rama);
                 if (*znaleziona_rama != NULL) {
                     odwiedzone[u] = 0;
@@ -85,11 +84,11 @@ void dfs_szukaj_ramy(lista_sasiedztw *list, int u, int start, int *odwiedzone, i
         }
         edge = edge->next;
     }
-    // Cofamy się (backtracking) - odznaczamy węzeł
+    // Cofamy się - odznaczamy węzeł
     odwiedzone[u] = 0; 
 }
 
-// Funkcja otulająca (wrapper) wywołująca przeszukiwanie
+// wrapper
 cycle* get_guaranteed_frame(lista_sasiedztw *list) {
     int *odwiedzone = calloc(list->rozmiar, sizeof(int));
     int *sciezka = calloc(list->rozmiar, sizeof(int));
@@ -119,19 +118,14 @@ Lista_W* lv_init(lista_sasiedztw* m) {
         v->czy_zewn = 0;
         v->krawedzie = m->lista[i];
         
-        // PAMIĘTAJ: Musisz mieć pole 'nr_wierzcholka_start' w m->lista[i] 
-        // lub osobnej tablicy m->nazwy_wierzcholkow, aby to przypisać!
-        // Zakładamy, że find_id_in_list i wczytaj.c poprawnie obsługują nazwy.
-        // Jeśli nie masz pola w macierzy, przypisujemy i+1 jako fallback.
-        v->nazwa = m->lista[i]->nr_wierzcholka_start; // Tu wpisz logikę pobierania nazwy, jeśli i+1 to za mało
-        
+        v->nazwa = m->lista[i]->nr_wierzcholka_start; 
         lv->lista[i] = v;
     }
 
     return lv;
 }
 
-// Mapowanie nazwy (np. 60) na indeks w tablicy (0..N-1)
+
 int znajdz_id_po_nazwie(Lista_W* lv, int szukana_nazwa) {
     for (int i = 0; i < lv->rozmiar; i++) {
         if (lv->lista[i]->nazwa == szukana_nazwa) {
@@ -156,7 +150,7 @@ void tutte_zewn_z_cyklu(Lista_W* lv, cycle* rama) {
 // Obliczanie średniej pozycji sąsiadów
 void tutte_wewn(Lista_W* lv) {
     for(int i = 0; i < lv->rozmiar; i++) {
-        // Pomijamy wierzchołki "przybite" do ramy
+        // Pominięcie wierzchołków na kole
         if(lv->lista[i]->czy_zewn == 0) {
             double suma_x = 0;
             double suma_y = 0;
@@ -164,7 +158,6 @@ void tutte_wewn(Lista_W* lv) {
 
             lista_k* temp = lv->lista[i]->krawedzie;
             while(temp != NULL) {
-                // Szukamy indeksu sąsiada na podstawie jego nazwy
                 int target_id = znajdz_id_po_nazwie(lv, temp->nr_wierzcholka_cel);
 
                 if (target_id != -1) {

@@ -3,7 +3,7 @@
 #define _STRUCTS_H_
 
 typedef struct l{
-    char* nazwa;
+    char* nazwa; 
     double wartosc;
     int nr_wierzcholka_start;  //changed that
     int nr_wierzcholka_cel; 

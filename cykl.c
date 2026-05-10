@@ -110,9 +110,7 @@ int is_connected_without_cycle(lista_sasiedztw *list,cycle *pretender){
     int i=0;
     int *is_in_cycle=calloc(list->rozmiar,sizeof(int));
     for(int j=0;j<pretender->rozmiar;j++){
-        
         is_in_cycle[pretender->wierzcholki[j]]=1;
-        //printf("%d: %d, %d\n",j,pretender->wierzcholki[j],find_id_in_list(list,pretender->wierzcholki[j]));
     }
     while(start_id==-1){
         if(!is_in_cycle[i]){
@@ -121,10 +119,7 @@ int is_connected_without_cycle(lista_sasiedztw *list,cycle *pretender){
         }
         i++;
     }
-    //for(int x=0;x<list->rozmiar;x++){
-      //  printf("%d = %d\n",x,is_in_cycle[x]);
-    //}
-    //printf("%d\n",start_id);
+
     if(start_id!=-1){
         dfs_without_cycle(list,pretender,color,is_in_cycle,start_id);
     }
@@ -231,19 +226,6 @@ cycle *split_if_shortcut(lista_sasiedztw *list, cycle *pretender){
     free(is_in_cycle);
     return pretender;
 }
-
-
-
-
-
-/*int is_in_cycle(cycle *test,int id){
-    for(int i=0;i<test->rozmiar;i++){
-        if(test->wierzcholki[i]==id){
-            return 1;
-        }
-    }
-    return 0;
-}*/
 
 
 void print_cycle_ids(cycle *to_print){
