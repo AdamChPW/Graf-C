@@ -1,50 +1,129 @@
 #include "tutte.h"
 #include <stdio.h>
+#include <math.h>
 
-Lista_W* algo( lista_sasiedztw* m )
-{
-    Lista_W* lv = lv_init( m );
+// Główna logika algorytmu
+Lista_W* algo(lista_sasiedztw* m) {
+    Lista_W* lv = lv_init(m);
 
-    struktura_scian* s = demoucron( m );
-    if( s == NULL)
-    {
-        fprintf(stderr, "Graf nie planarny lub bez cykli\n");
+    // Odpalamy naszą nową koparkę pętli
+    cycle* rama = get_guaranteed_frame(m);
+
+    if (rama == NULL) {
+        fprintf(stderr, "Blad: Nie znaleziono poprawnej ramy w grafie (moze nie byc 3-spojny)!\n");
         free_lv(lv);
         return NULL;
     }
 
-    int zewn_idx = s->s_zewn;
-    lv->liczba_zewn = s->len[zewn_idx];
-    for (int i = 0; i < s->len[zewn_idx]; i++) 
-    {
-        int wierzcholek = s->sciany[zewn_idx][i];
-        lv->lista[wierzcholek - 1]->czy_zewn = 1;
+    // Konfiguracja ramy zewnętrznej
+    lv->liczba_zewn = rama->rozmiar;
+    for (int i = 0; i < rama->rozmiar; i++) {
+        int id = rama->wierzcholki[i]; 
+        lv->lista[id]->czy_zewn = 1;
     }
 
-    triang( lv, s );
+    // Ustawienie ramy na okręgu
+    tutte_zewn_z_cyklu(lv, rama);
 
-    tutte_zewn( lv, s );
+    // Relaksacja 
+    for(int i = 0; i < MAXITER; i++) {
+        tutte_wewn(lv);
+    }
 
-    for(int i = 0; i < MAXITER; i++)
-        tutte_wewn( lv );
+    // Sprzątanie po ramie
+    free(rama->wierzcholki);
+    free(rama);
 
-    free_struktura_scian(s); 
     return lv;
 }
 
-Lista_W* lv_init( lista_sasiedztw* m )
-{
+// Przeszukiwanie z nawrotami w celu znalezienia jakiejkolwiek pętli,
+// która po docięciu da poprawną ramę bez odcinania reszty grafu.
+void dfs_szukaj_ramy(lista_sasiedztw *list, int u, int start, int *odwiedzone, int *sciezka, int dlugosc, cycle **znaleziona_rama) {
+    if (*znaleziona_rama != NULL) return; 
+
+    odwiedzone[u] = 1;
+    sciezka[dlugosc] = u;
+    dlugosc++;
+
+    lista_k *edge = list->lista[u];
+    while (edge != NULL) {
+        int v = find_id_in_list(list, edge->nr_wierzcholka_cel);
+        if (v != -1) {
+            if (v == start && dlugosc >= 3) {
+                // Znaleźliśmy pętlę! Pakujemy ją w strukturę.
+                cycle *kandydat = calloc(1, sizeof(cycle));
+                kandydat->rozmiar = dlugosc;
+                kandydat->wierzcholki = calloc(dlugosc, sizeof(int));
+                for (int i = 0; i < dlugosc; i++) kandydat->wierzcholki[i] = sciezka[i];
+
+                // Od razu zlecamy docięcie cięciw
+                cycle *dociety = kandydat;
+                while (1) {
+                    cycle *nowy = split_if_shortcut(list, dociety);
+                    if (nowy == dociety) break;
+                    dociety = nowy;
+                }
+
+                // Sprawdzamy, czy ta konkretna rama jest tą jedyną "dobrą"
+                if (is_connected_without_cycle(list, dociety)) {
+                    *znaleziona_rama = dociety; 
+                    odwiedzone[u] = 0;
+                    return;
+                } else {
+                    // Pudło, zwalniamy pamięć i szukamy innej pętli
+                    free(dociety->wierzcholki);
+                    free(dociety);
+                }
+            } else if (!odwiedzone[v]) {
+                dfs_szukaj_ramy(list, v, start, odwiedzone, sciezka, dlugosc, znaleziona_rama);
+                if (*znaleziona_rama != NULL) {
+                    odwiedzone[u] = 0;
+                    return;
+                }
+            }
+        }
+        edge = edge->next;
+    }
+    // Cofamy się (backtracking) - odznaczamy węzeł
+    odwiedzone[u] = 0; 
+}
+
+// Funkcja otulająca (wrapper) wywołująca przeszukiwanie
+cycle* get_guaranteed_frame(lista_sasiedztw *list) {
+    int *odwiedzone = calloc(list->rozmiar, sizeof(int));
+    int *sciezka = calloc(list->rozmiar, sizeof(int));
+    cycle *best = NULL;
+
+    for (int i = 0; i < list->rozmiar && best == NULL; i++) {
+        dfs_szukaj_ramy(list, i, i, odwiedzone, sciezka, 0, &best);
+    }
+
+    free(odwiedzone);
+    free(sciezka);
+    return best;
+}
+
+
+// Inicjalizacja listy wierzchołków
+Lista_W* lv_init(lista_sasiedztw* m) {
     Lista_W* lv = malloc(sizeof(Lista_W));
     lv->rozmiar = m->rozmiar;
     lv->liczba_zewn = 0;
     lv->lista = malloc(lv->rozmiar * sizeof(Wierzch*));
 
-    for(int i = 0; i< lv->rozmiar; i++){
+    for(int i = 0; i < lv->rozmiar; i++) {
         Wierzch* v = malloc(sizeof(Wierzch));
         v->poz[0] = 0;
         v->poz[1] = 0;
         v->czy_zewn = 0;
         v->krawedzie = m->lista[i];
+        
+        // PAMIĘTAJ: Musisz mieć pole 'nr_wierzcholka_start' w m->lista[i] 
+        // lub osobnej tablicy m->nazwy_wierzcholkow, aby to przypisać!
+        // Zakładamy, że find_id_in_list i wczytaj.c poprawnie obsługują nazwy.
+        // Jeśli nie masz pola w macierzy, przypisujemy i+1 jako fallback.
+        v->nazwa = m->lista[i]->nr_wierzcholka_start; // Tu wpisz logikę pobierania nazwy, jeśli i+1 to za mało
         
         lv->lista[i] = v;
     }
@@ -52,128 +131,64 @@ Lista_W* lv_init( lista_sasiedztw* m )
     return lv;
 }
 
-// Tworzy sztuczne polaczenie do triangulacji
-// Zastosowanie: add_sk(baza, 1, 3, 4) -> Dodaje krawedz od 1 do 4 po wystapieniu krawedzi 3.
-void add_sk(Lista_W* lv, int from, int after, int to)
-{
-    if(from == to){
-        //fprintf(stderr, "Proba dodania krawedzi od %d do %d\n", from, to);
-        return;
+// Mapowanie nazwy (np. 60) na indeks w tablicy (0..N-1)
+int znajdz_id_po_nazwie(Lista_W* lv, int szukana_nazwa) {
+    for (int i = 0; i < lv->rozmiar; i++) {
+        if (lv->lista[i]->nazwa == szukana_nazwa) {
+            return i;
+        }
     }
+    return -1;
+}
 
-    lista_k* new = malloc(sizeof(lista_k));
-    new->nazwa = NULL;
-    new->wartosc = 0;
-    new->nr_wierzcholka = to;
-
-    lista_k* temp = lv->lista[from-1]->krawedzie;
-
-    while(1 == 1)
-    {
-        if(temp->nr_wierzcholka == after)
-        {
-            if(temp->next != NULL && temp->next->nr_wierzcholka == to){
-                break;
-            }
-
-            new->next = temp->next;
-            temp->next = new;
-            break;
-        }
-
-        temp = temp->next;
-        if(temp == NULL)
-        {
-            fprintf(stderr, "Nieznaleziono v%d w krawedziach v%d, dodano v%d na koncu listy.\n", after, from, to);
-            new->next = NULL;
-            temp = new;
-            break;
-        }
+// Rozmieszczanie ramy na okręgu
+void tutte_zewn_z_cyklu(Lista_W* lv, cycle* rama) {
+    int n = rama->rozmiar;
+    double angle = 2.0 * M_PI / n;
+    
+    for(int i = 0; i < n; i++) {
+        int id = rama->wierzcholki[i]; 
+        lv->lista[id]->poz[0] = SKALA * cos(i * angle);
+        lv->lista[id]->poz[1] = SKALA * sin(i * angle);
     }
 }
 
-
-void triang( Lista_W* lv, struktura_scian* s )
-{
-    int pivot = 0;
-    int previous = 0;
-    int target = 0;
-
-    for(int i = 0; i < s->rozmiar; i++)
-    {
-        if(s->s_zewn == i)
-            continue;
-
-        for(int kr = 2; kr < s->len[i]-1; kr++)     
-        {
-            pivot = s->sciany[i][0];
-            target = s->sciany[i][kr];
-        
-            previous = s->sciany[i][kr-1];  
-            add_sk(lv, pivot, previous, target);
-    
-            previous = s->sciany[i][s->len[i]-1];  //Poprzedni dla pierwszego wierz to ostatni.
-            add_sk(lv, target, previous, pivot);
-        }
-    }
-    
-}
-
-void tutte_zewn( Lista_W* lv, struktura_scian* s ) 
-{
-    int zewn_idx = s->s_zewn;
-    int dlugosc = s->len[zewn_idx];
-    double angle = 2 * M_PI / dlugosc;
-    
-    for(int i = 0; i < dlugosc; i++){
-        int wierzcholek = s->sciany[zewn_idx][i] - 1; 
-        
-        lv->lista[wierzcholek]->poz[0] = SKALA * cos( i * angle );
-        lv->lista[wierzcholek]->poz[1] = SKALA * sin( i * angle );
-    }
-}
-
-void tutte_wewn( Lista_W* lv )
-{
-    double obecna_waga;
-    double poprzednia_waga = 0;
-    double suma_odw_wag;
-    double suma_x;
-    double suma_y;
-
-    for(int i = 0; i<lv->rozmiar; i++){
-        if(lv->lista[i]->czy_zewn == 0)
-        {
-            suma_odw_wag = 0;
-            suma_x = 0;
-            suma_y = 0;
+// Obliczanie średniej pozycji sąsiadów
+void tutte_wewn(Lista_W* lv) {
+    for(int i = 0; i < lv->rozmiar; i++) {
+        // Pomijamy wierzchołki "przybite" do ramy
+        if(lv->lista[i]->czy_zewn == 0) {
+            double suma_x = 0;
+            double suma_y = 0;
+            double suma_wag = 0;
 
             lista_k* temp = lv->lista[i]->krawedzie;
-            while(temp != NULL){
+            while(temp != NULL) {
+                // Szukamy indeksu sąsiada na podstawie jego nazwy
+                int target_id = znajdz_id_po_nazwie(lv, temp->nr_wierzcholka_cel);
 
-                if(temp->nazwa == NULL)
-                    obecna_waga = poprzednia_waga;
-                else
-                    obecna_waga = temp->wartosc == 0 ? 0.00000001 : temp -> wartosc;
+                if (target_id != -1) {
+                    // Obsługa wag (jeśli waga = 0, traktujemy jako małą wartość)
+                    double waga = (temp->wartosc <= 0) ? 1.0 : 1.0 / temp->wartosc;
                     
-                suma_odw_wag += 1/obecna_waga;
-                poprzednia_waga = obecna_waga;
-
-                int target = temp->nr_wierzcholka - 1;
-                suma_x += (1/obecna_waga) * lv->lista[target]->poz[0];
-                suma_y += (1/obecna_waga) * lv->lista[target]->poz[1];
+                    suma_x += waga * lv->lista[target_id]->poz[0];
+                    suma_y += waga * lv->lista[target_id]->poz[1];
+                    suma_wag += waga;
+                }
                 temp = temp->next;
             }
-            lv->lista[i]->poz[0] = suma_x / suma_odw_wag;
-            lv->lista[i]->poz[1] = suma_y / suma_odw_wag;
+
+            if(suma_wag > 0) {
+                lv->lista[i]->poz[0] = suma_x / suma_wag;
+                lv->lista[i]->poz[1] = suma_y / suma_wag;
+            }
         }
     }
 }
 
-void free_lv(Lista_W* lv)
-{
-    for(int i = 0; i < lv->rozmiar; i++)
-    {
+void free_lv(Lista_W* lv) {
+    if (lv == NULL) return;
+    for(int i = 0; i < lv->rozmiar; i++) {
         free(lv->lista[i]);
     } 
     free(lv->lista);

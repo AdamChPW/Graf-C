@@ -1,17 +1,10 @@
+
 #ifndef _wczytaj_h_
 #define _wczytaj_h_
-
-typedef struct l{
-    char* nazwa;    //Dodalem
-    double wartosc;
-    int nr_wierzcholka;
-    struct l* next; // Kompilator errora walil gdy byl alias*
-}lista_k;
-
-typedef struct m{
-    int rozmiar;
-    lista_k** lista;    //Zmienilem z lista* na lista**. Jak jest ktos modzejszy to niech to zmieni by dzialo z lista_k*
-}lista_sasiedztw;
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include "struct.h"
 
 // Wczytuje dane do tej smiesznej macierzy / listy sasiedztw
 // Ja to zrobie (Adam)

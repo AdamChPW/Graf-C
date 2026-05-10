@@ -4,14 +4,14 @@
 
 #include "wczytaj.h"
 #include "tutte.h"
-
+#include "struct.h"
 
 void test(lista_sasiedztw* m){
     for(int i = 0; i < m->rozmiar; i++){
         printf("v%d[ ", i+1);
         lista_k* temp  = m->lista[i];
         while(temp){
-            printf("%d ",temp->nr_wierzcholka);
+            printf("%d ",temp->nr_wierzcholka_cel);
             temp = temp->next;
         }
         printf("]\n");
@@ -31,7 +31,7 @@ int spr_macierz(lista_sasiedztw* l){
     for (int i = 0; i < V; i++) {
         lista_k* temp = l->lista[i];
         while (temp) {
-            if (i < temp->nr_wierzcholka - 1) { 
+            if (i < temp->nr_wierzcholka_cel - 1) { 
                 E++;
             }
             temp = temp->next;
@@ -56,7 +56,7 @@ int spr_macierz(lista_sasiedztw* l){
     for (int i = 0; i < V; i++) {
         lista_k* temp = l->lista[i];
         while (temp) {
-            if (i < temp->nr_wierzcholka - 1) {
+            if (i < temp->nr_wierzcholka_cel - 1) {
                 for (int j = 0; j < licznik_nazw; j++) {
                     if (strcmp(sprawdzone_nazwy[j], temp->nazwa) == 0) {
                         fprintf(stderr, "Blad: Nazwa krawedzi '%s' nie jest unikalna!\n", temp->nazwa);
@@ -110,8 +110,8 @@ void wypisz_dla_desmosa(Lista_W* lv) {
     {
         lista_k* temp = lv->lista[i]->krawedzie;
         while(temp != NULL) {
-            if (i + 1 < temp->nr_wierzcholka) {
-                fprintf(plik, "\\operatorname{polygon}\\left(v_{%d},v_{%d}\\right)\n", i+1, temp->nr_wierzcholka);
+            if (i + 1 < temp->nr_wierzcholka_cel) {
+                fprintf(plik, "\\operatorname{polygon}\\left(v_{%d},v_{%d}\\right)\n", i+1, temp->nr_wierzcholka_cel);
             }
             temp = temp->next;
         }

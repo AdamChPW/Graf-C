@@ -23,4 +23,4 @@ def generuj_graf_trojspojny(liczba_wierzcholkow, nazwa_pliku="wejscie.txt"):
             
     print(f"Sukces! Wygenerowano graf ({liczba_wierzcholkow} wierzcholkow) do pliku: {nazwa_pliku}")
 
-generuj_graf_trojspojny(80)
+generuj_graf_trojspojny(200)

@@ -1,6 +1,4 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+
 #include "wczytaj.h"
 
 #define BUFSIZE 1024
@@ -11,7 +9,8 @@ int add_k(lista_sasiedztw* m, int from, int to, char* nazwa, double waga)
     if( k == NULL )
         return 1;
     
-    k->nr_wierzcholka = to;
+    k->nr_wierzcholka_cel = to;
+    k->nr_wierzcholka_start=from;
     k->wartosc = waga;
     k->nazwa = malloc(strlen(nazwa) + 1);
     if(k->nazwa == NULL) {
@@ -28,7 +27,7 @@ int add_k(lista_sasiedztw* m, int from, int to, char* nazwa, double waga)
     lista_k* temp = m->lista[from-1];
     while(temp != NULL)
     {
-        if(temp->nr_wierzcholka == to){
+        if(temp->nr_wierzcholka_cel == to){
             fprintf(stderr, "Istnieje juz droga z v%d do v%d\n", from, to);
             free(temp);
             free(k->nazwa);

@@ -7,4 +7,3 @@ edge6 2 4 1.0
 edge7 2 5 1.0
 edge8 3 4 1.0
 edge9 3 5 1.0
-edge10 4 5 1.0
